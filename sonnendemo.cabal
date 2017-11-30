@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                sonnendemo
-version:             0.2.0.0
+version:             0.3.0.0
 -- synopsis:
 -- description:
 license:             BSD3
@@ -19,16 +19,16 @@ cabal-version:       >=1.18
 library
   exposed-modules:     SonnenModel
   build-depends:       base  >= 4.7 && < 5
-                     , rhine == 0.2.*
+                     , rhine == 0.3.*
   default-language:    Haskell2010
 
 
 executable sonnendemo
   main-is:             MainGloss.hs
   build-depends:       base        >= 4.7 && < 5
-                     , dunai       == 0.2.*
-                     , rhine       == 0.2.*
-                     , rhine-gloss == 0.2.*
+                     , dunai       == 0.3.*
+                     , rhine       == 0.3.*
+                     , rhine-gloss == 0.3.*
                      , gloss       == 1.11.*
                      , sonnendemo
   default-language:    Haskell2010
@@ -36,6 +36,6 @@ executable sonnendemo
 executable sonnendemo-console
   main-is:             MainConsole.hs
   build-depends:       base        >= 4.7 && < 5
-                     , rhine       == 0.2.*
+                     , rhine       == 0.3.*
                      , sonnendemo
   default-language:    Haskell2010
