@@ -16,17 +16,20 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.18
 
 
-library sonnendemo
+library
   exposed-modules:     SonnenModel
   build-depends:       base  >= 4.7 && < 5
                      , rhine == 0.2.*
+  default-language:    Haskell2010
 
 
 executable sonnendemo
   main-is:             MainGloss.hs
   build-depends:       base        >= 4.7 && < 5
+                     , dunai       == 0.2.*
                      , rhine       == 0.2.*
                      , rhine-gloss == 0.2.*
+                     , gloss       == 1.11.*
                      , sonnendemo
   default-language:    Haskell2010
 
