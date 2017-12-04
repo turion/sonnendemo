@@ -57,10 +57,9 @@ onCoffee pos = abs x < fst coffeeCupSize && abs y < snd coffeeCupSize
 
 -- | Draw a cup of coffee, filled according to the given 'CoffeeState'.
 coffeeCup :: CoffeeState -> Picture
-coffeeCup coffeeState = pictures
+coffeeCup coffeeState = contoured 2 $ pictures
   -- The cup
-  [ translate (-40) 60 $ pictures
-    [color white $ circleSolid 50, color backgroundColor $ circleSolid 30]
+  [ translate (-40) 60 $ color white $ thickCircle 50 10
   , color white $ uncurry rectangleUpperSolid coffeeCupSize
   -- The coffee
   , color (dark $ dark $ dark $ dark yellow)
