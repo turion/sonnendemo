@@ -1,11 +1,11 @@
 # README
---------
+
 
 [![Build Status](https://travis-ci.org/turion/sonnendemo.svg?branch=master)](https://travis-ci.org/turion/sonnendemo)
 
 This is a simple example game for the gloss bindings
-for [Rhine](https://github.com/turion/rhine)
-, an asynchronous functional reactive programming library.
+for [Rhine](https://github.com/turion/rhine),
+an asynchronous functional reactive programming library.
 
 ## Installation
 
