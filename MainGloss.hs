@@ -95,21 +95,23 @@ solarPower = color (dark blue) $ pictures
     down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
 
 
--- | Draw a picture for the current weather.
-weatherPicture :: Weather -> Picture
-weatherPicture (Weather Sunny _)  = translate (-100) 0 $ color yellow $ pictures
+-- | Draw a picture for the current state of the sun.
+sunPicture :: Sun -> Picture
+sunPicture Sunny  = translate (-100) 0 $ color yellow $ pictures
   $ circleSolid 40 : [ rotate (45 * n) $ rectangleSolid 5 140 | n <- [0..3] ]
-weatherPicture (Weather Cloudy _) = color (greyN 0.5) $ pictures
+sunPicture Cloudy = color (greyN 0.5) $ pictures
   [ translate (-40)  0 $ circleSolid 20
   , translate   35  20 $ circleSolid 10
   , translate (-15) 10 $ circleSolid 30
   , translate   15  10 $ circleSolid 30
   , translate   45   0 $ circleSolid 20
   ]
-weatherPicture (Weather Night _)  = translate 100 0 $ pictures
+sunPicture Night  = translate 100 0 $ pictures
   [ color (light yellow) $ circleSolid 40
   , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
   ]
+
+
 
 -- | Combine all graphics into one picture.
 graphics :: (CoffeeState, Energy, Weather) -> Picture
@@ -127,7 +129,7 @@ graphics (coffeeState, batteryLevel, weather) = translate 0 (-200) $ pictures
             ]
     ]
   , uncurry translate batteryPos $ battery batteryLevel
-  , translate 0 300 $ weatherPicture weather
+  , translate 0 300 $ sunPicture $ sun weather
   , uncurry translate solarPowerPos solarPower
   ]
 
