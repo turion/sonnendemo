@@ -75,13 +75,19 @@ gameStates
   :: (Monad m, Clock m cl, Diff (TimeDomainOf cl) ~ Float)
   => SyncExcept m cl (Bool, Energy) CoffeeState Empty
 gameStates = do
-  _ <- try $ proc (coffeeRequest, batteryLevel) -> do
-    -- In case there is sufficient battery, brew a coffee when requested.
-    _ <- throwOn () -< coffeeRequest && batteryLevel >= coffeeEnergy + batteryBalancingMargin
+  -- In case there is sufficient battery, start brewing a coffee when requested
+  try $ proc (coffeeRequest, batteryLevel) -> do
+    _ <- throwOn () -< coffeeRequest
+                    && batteryLevel >= coffeeEnergy + batteryBalancingMargin
     returnA         -< Empty
-  _ <- try $ scaledTimer brewingTime >>> arr Brewing
-  _ <- try $ arr fst >>> throwOn () >>> arr (const Full)
-  _ <- try $ scaledTimer drinkingTime >>> arr Drinking
+  -- Output the progress of the brewing process until the time is up
+  try $ scaledTimer brewingTime >>> arr Brewing
+  -- Start drinking the coffee when requested
+  try $ proc (drinkRequest, _) -> do
+    _ <- throwOn () -< drinkRequest
+    returnA         -< Full
+  -- Output the progress of the drinking process until the time is up
+  try $ scaledTimer drinkingTime >>> arr Drinking
   gameStates
 
 -- | Simulate the current battery charge level,
