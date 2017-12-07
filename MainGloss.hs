@@ -142,19 +142,25 @@ battery batteryLevel = contoured 2 $ pictures
     $ snd batterySize * batteryLevel / batteryCapacity
   ]
 
+wireThickness :: Float
+wireThickness = 5
+
+-- | Draw a wire of a given length
+wire :: Float -> Picture
+wire = color (greyN 0.05) . rectangleUpperSolid wireThickness
+
 -- | Draw a little solar plant, with wires.
 solarPower :: Picture
-solarPower = color (dark blue) $ pictures
-  [ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
-  , rotate 180 $ rectangleUpperSolid wire down
-  , translate 0 (wire / 2 - down)
-    $ rotate 270 $ rectangleUpperSolid wire
+solarPower = pictures
+  [ color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
+  , rotate 180 $ wire down
+  , translate 0 (wireThickness / 2 - down)
+    $ rotate 270 $ wire
     $ fst solarPowerPos - fst batteryPos + fst batterySize
   ]
   where
     h    = (0 ,  10)
     w    = (50, -30)
-    wire = 5
     down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
 
 -- | A house containing the battery and the coffee machine.
@@ -192,13 +198,18 @@ sunPicture Night  = translate 100 0 $ pictures
   , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
   ]
 
+-- | Horizontal position of the wind turbine
+windTurbinePosX :: Float
+windTurbinePosX = -300
+
 -- | Draw a picture of the wind turbine where the rotors are at the given angle.
 windTurbinePicture :: Float -> Picture
 windTurbinePicture angle = pictures
-  [ contoured 2 $ color (greyN 0.95) $ rectangleUpperSolid 15 100
+  [ translate 0 10 $ rotate (-90) $ wire $ windTurbinePosX - fst batteryPos
+  , contoured 2 $ color (greyN 0.95) $ rectangleUpperSolid 15 100
   , contoured 2 $ translate 0 100 $ rotate angle $ color white $ pictures
       $ circleSolid 15 :
-      [ rotate (120 * n) $ rectangleUpperSolid 15 70
+      [ rotate (120 * n) $ rectangleUpperSolid 15 80
       | n <- [1,2,3]
       ]
   ]
@@ -227,10 +238,10 @@ graphics = proc (coffeeState, batteryLevel, Weather {..}) -> do
               , polygon [( 40, 100), (0, 0), (0, 15)]
               ]
       ]
-    , uncurry translate batteryPos $ battery batteryLevel
     , translate 0 400 $ sunPicture sun
     , uncurry translate solarPowerPos solarPower
-    , translate (-300) 0 $ windTurbinePicture windTurbineAngle
+    , translate windTurbinePosX 0 $ windTurbinePicture windTurbineAngle
+    , uncurry translate batteryPos $ battery batteryLevel
     , translate 100 (-20) $ house
     ]
 
