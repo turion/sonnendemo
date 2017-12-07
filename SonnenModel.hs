@@ -35,26 +35,26 @@ coffeeLevel (Drinking x) = 1 - x
 
 
 brewingTime :: Time
-brewingTime = 3
+brewingTime = 2
 
 drinkingTime :: Time
 drinkingTime = 2
 
 batteryCapacity :: Energy
-batteryCapacity = 3
+batteryCapacity = 4
 
 -- | The energy needed to brew one cup of coffee.
 coffeeEnergy :: Energy
-coffeeEnergy = 0.9
+coffeeEnergy = brewingTime * batteryMaxPower
 
 -- | The maximum power that can be drained from or charged to the battery.
 batteryMaxPower :: Power
-batteryMaxPower = 1
+batteryMaxPower = 0.3
 
 -- | The minimum time under which the battery is required to be able to
 --   supply primary control/balancing power.
 batteryBalancingTime :: Time
-batteryBalancingTime = 1
+batteryBalancingTime = 4
 
 -- | The minimum charge that must remain in the battery
 --   in order to supply primary control/balancing power.
@@ -69,13 +69,12 @@ gameLogic
   => SyncSF m cl Bool (CoffeeState, Energy, Weather)
 -- BehaviourF m Time Bool (CoffeeState, Energy, Weather)
 gameLogic = feedback 0 $ proc (coffeeRequest, batteryLevel) -> do
-  weather       <- theWeather           -< ()
-  let Weather {..} = weather
-  coffeeState   <- safely gameStates    -< (coffeeRequest, batteryLevel)
-  batteryLevel' <- batterySim           -< ( (solarPlant sun, coffeeState)
-                                           , batteryLevel)
-  returnA                               -< ( (coffeeState, batteryLevel', weather)
-                                           , batteryLevel')
+  weather       <- theWeather        -< ()
+  coffeeState   <- safely gameStates -< (coffeeRequest, batteryLevel)
+  batteryLevel' <- batterySim        -< ( (weather, coffeeState)
+                                        , batteryLevel)
+  returnA                            -< ( (coffeeState, batteryLevel', weather)
+                                        , batteryLevel')
 
 gameStates
   :: (Monad m, Clock m cl, Diff (TimeDomainOf cl) ~ Float)
@@ -96,20 +95,25 @@ gameStates = do
   try $ scaledTimer drinkingTime >>> arr Drinking
   gameStates
 
+-- TODO Consider again to put the feedback in the batterySim (it makes more sense)
 -- | Simulate the current battery charge level,
 --   depending on the current solar power and the state of the coffee machine.
 batterySim
   :: (Monad m, Diff td ~ Float)
-  => BehaviourF m td ((Power, CoffeeState), Energy) Energy
-batterySim = proc ((solarPower, coffeeState), batteryLevel) -> do
+  => BehaviourF m td ((Weather, CoffeeState), Energy) Energy
+batterySim = proc ((Weather {..}, coffeeState), batteryLevel) -> do
   let
     coffeeDrain = case coffeeState of
       Brewing _ -> batteryMaxPower
       _         -> 0
     solarInflux = if batteryLevel >= batteryCapacity - batteryBalancingMargin
       then 0
-      else solarPower
-    batteryTotalPower = solarInflux - coffeeDrain
+      else solarPlant sun
+    windInflux = if batteryLevel >= batteryCapacity - batteryBalancingMargin
+                 && wind /= Strong
+      then -batteryMaxPower
+      else windTurbine wind
+    batteryTotalPower = solarInflux + windInflux - coffeeDrain
   integral -< batteryTotalPower
 
 
@@ -152,7 +156,8 @@ solarPlant Night  = 0
 
 -- | The possible wind strengths
 data Wind = Normal | Strong | Weak
-  deriving Show
+  deriving (Show, Eq)
+
 
 windStates
   :: (Monad m, Clock m cl, Diff (TimeDomainOf cl) ~ Float)
