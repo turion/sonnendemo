@@ -2,7 +2,9 @@
 Game events (mouse clicks) are captured
 -}
 
-{-# LANGUAGE Arrows #-}
+{-# LANGUAGE Arrows          #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeFamilies    #-}
 module Main where
 
 -- gloss
@@ -29,7 +31,7 @@ backgroundColor = mixColors 10 20 green white
 
 -- | The position of the coffee cup on the screen.
 coffeePos :: Point
-coffeePos = (100, 0)
+coffeePos = (160, 0)
 
 coffeeSize :: Vector
 coffeeSize = (50, 100)
@@ -39,13 +41,18 @@ coffeeCupSize :: Vector
 coffeeCupSize = coffeeSize ^+^ (30, 30)
 
 batteryPos :: Point
-batteryPos = (-100, 0)
+batteryPos = (0, 0)
 
 batterySize :: Vector
 batterySize = (30, 100)
 
 solarPowerPos :: Point
-solarPowerPos = (-250, 200)
+solarPowerPos = (-150, 200)
+
+windTurbineHeight :: Float
+windTurbineHeight = 100
+
+-- TODO Spread the coordinates to the graphics where they are needed
 
 -- | Determines whether a mouse click is inside the coffee cup.
 onCoffee :: Point -> Bool
@@ -94,12 +101,30 @@ solarPower = color (dark blue) $ pictures
     wire = 5
     down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
 
+-- | A house containing the battery and the coffee machine.
+house :: Picture
+house = pictures $
+  [ scale x 1 $ color (greyN 0.3) $ pictures
+    [ translate 0 (d/2) $ rotate 90 $ rectangleUpperSolid d w
+    , translate w 0 $ rectangleUpperSolid d h
+    ]
+  | x <- [1, -1]
+  ]
+  ++
+  [ scale x 1 $ color (dark red) $ translate 0 (h + w)
+    $ rotate (-135) $ translate 0 (-d/2) $ rectangleUpperSolid d 260
+  | x <- [1, -1]
+  ]
+  where
+    h = 140
+    w = 160
+    d = 10
 
 -- | Draw a picture for the current state of the sun.
 sunPicture :: Sun -> Picture
-sunPicture Sunny  = translate (-100) 0 $ color yellow $ pictures
+sunPicture Sunny  = color yellow $ pictures
   $ circleSolid 40 : [ rotate (45 * n) $ rectangleSolid 5 140 | n <- [0..3] ]
-sunPicture Cloudy = color (greyN 0.5) $ pictures
+sunPicture Cloudy = translate (-100) 0 $ color (greyN 0.5) $ pictures
   [ translate (-40)  0 $ circleSolid 20
   , translate   35  20 $ circleSolid 10
   , translate (-15) 10 $ circleSolid 30
@@ -111,27 +136,46 @@ sunPicture Night  = translate 100 0 $ pictures
   , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
   ]
 
+-- | Draw a picture of the wind turbine where the rotors are at the given angle.
+windTurbinePicture :: Float -> Picture
+windTurbinePicture angle = pictures
+  [ color (greyN 0.95) $ rectangleUpperSolid 15 100
+  , translate 0 100 $ rotate angle $ color white $ pictures $ circleSolid 15 :
+      [ rotate (120 * n) $ rectangleUpperSolid 15 80
+      | n <- [1,2,3]
+      ]
+  ]
+
+-- | Determines how many degrees per second the wind turbine will turn.
+windTurbineSpeed :: Wind -> Float
+windTurbineSpeed Normal = 50
+windTurbineSpeed Strong = 100
+windTurbineSpeed Weak   = 5
 
 
 -- | Combine all graphics into one picture.
-graphics :: (CoffeeState, Energy, Weather) -> Picture
-graphics (coffeeState, batteryLevel, weather) = translate 0 (-200) $ pictures
-  [ uncurry translate coffeePos $ pictures
-    [ coffeeCup coffeeState
-    -- Status symbol whether a coffee can be made
-    , translate 0 (fst coffeeSize) $
-        if batteryLevel < batteryBalancingMargin + coffeeEnergy && isEmpty coffeeState
-          then color red $ pictures -- A cross (✘)
-            [ rotate (40 * sign) $ rectangleSolid 10 100 | sign <- [1, -1] ]
-          else translate 70 0 $ color green $ pictures -- A check mark (✔)
-            [ polygon [(-20,  20), (0, 0), (0, 15)]
-            , polygon [( 40, 100), (0, 0), (0, 15)]
-            ]
+graphics :: Monad m => BehaviourF m Float (CoffeeState, Energy, Weather) Picture
+graphics = proc (coffeeState, batteryLevel, Weather {..}) -> do
+  windTurbineAngle <- integral <<< average 0.3 -< windTurbineSpeed wind
+  returnA                                      -< translate 0 (-200) $ pictures
+    [ uncurry translate coffeePos $ pictures
+      [ coffeeCup coffeeState
+      -- Status symbol whether a coffee can be made
+      , translate 0 (fst coffeeSize) $
+          if batteryLevel < batteryBalancingMargin + coffeeEnergy && isEmpty coffeeState
+            then color red $ pictures -- A cross (✘)
+              [ rotate (40 * sign) $ rectangleSolid 10 100 | sign <- [1, -1] ]
+            else translate 65 (-20) $ color green $ scale 0.8 0.8 $ pictures -- A check mark (✔)
+              [ polygon [(-20,  20), (0, 0), (0, 15)]
+              , polygon [( 40, 100), (0, 0), (0, 15)]
+              ]
+      ]
+    , uncurry translate batteryPos $ battery batteryLevel
+    , translate 0 400 $ sunPicture sun
+    , uncurry translate solarPowerPos solarPower
+    , translate (-300) 0 $ windTurbinePicture windTurbineAngle
+    , translate 100 (-20) $ house
     ]
-  , uncurry translate batteryPos $ battery batteryLevel
-  , translate 0 300 $ sunPicture $ sun weather
-  , uncurry translate solarPowerPos solarPower
-  ]
 
 
 -- * The main program
@@ -139,7 +183,7 @@ graphics (coffeeState, batteryLevel, weather) = translate 0 (-200) $ pictures
 -- | The main 'SyncSF' governing events, game logic and graphics.
 --   An event is produced whenever the user has clicked on the cup at least once.
 game :: GlossSyncSF ()
-game = arr (not . null) >>> gameLogic >>> arr graphics
+game = arr (not . null) >>> gameLogic >>> graphics
 
 
 -- | The main 'Rhine' with event selection.
@@ -150,4 +194,4 @@ glossRhine = buildGlossRhine select game
     select _ = Nothing
 
 main :: IO ()
-main = flowGloss (InWindow "sonnen" (640, 480) (10, 10)) backgroundColor 30 glossRhine
+main = flowGloss (InWindow "sonnen" (800, 600) (10, 10)) backgroundColor 30 glossRhine
