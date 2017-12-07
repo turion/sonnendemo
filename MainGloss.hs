@@ -145,7 +145,8 @@ sunPicture Night  = translate 100 0 $ pictures
 -- | Draw a picture of the wind turbine where the rotors are at the given angle.
 windTurbinePicture :: Float -> Picture
 windTurbinePicture angle = pictures
-  [ color (greyN 0.95) $ rectangleUpperSolid 15 100
+  [ translate 0 10 $ rotate (-90) $ wire $ windTurbinePosX - fst batteryPos
+  , color (greyN 0.95) $ rectangleUpperSolid 15 100
   , translate 0 100 $ rotate angle $ color white $ pictures $ circleSolid 15 :
       [ rotate (120 * n) $ rectangleUpperSolid 15 80
       | n <- [1,2,3]
