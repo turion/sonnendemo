@@ -120,7 +120,7 @@ onCoffee pos = abs x < fst coffeeCupSize && abs y < snd coffeeCupSize
 
 -- | Draw a cup of coffee, filled according to the given 'CoffeeState'.
 coffeeCup :: CoffeeState -> Picture
-coffeeCup coffeeState = pictures
+coffeeCup coffeeState = contoured 2 $ pictures
   -- The cup
   [ translate (-40) 60 $ color white $ thickCircle 50 10
   , color white $ uncurry rectangleUpperSolid coffeeCupSize
@@ -144,7 +144,7 @@ battery batteryLevel = contoured 2 $ pictures
 
 -- | Draw a little solar plant, with wires.
 solarPower :: Picture
-solarPower = contoured 2 $ color (dark blue) $ pictures
+solarPower = color (dark blue) $ pictures
   [ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
   , rotate 180 $ rectangleUpperSolid wire down
   , translate 0 (wire / 2 - down)
@@ -159,7 +159,7 @@ solarPower = contoured 2 $ color (dark blue) $ pictures
 
 -- | A house containing the battery and the coffee machine.
 house :: Picture
-house = pictures $
+house = contoured 2 $ pictures $
   [ scale x 1 $ color (greyN 0.3) $ pictures
     [ translate 0 (d/2) $ rotate 90 $ rectangleUpperSolid d w
     , translate w 0 $ rectangleUpperSolid d h
@@ -195,9 +195,10 @@ sunPicture Night  = translate 100 0 $ pictures
 -- | Draw a picture of the wind turbine where the rotors are at the given angle.
 windTurbinePicture :: Float -> Picture
 windTurbinePicture angle = pictures
-  [ color (greyN 0.95) $ rectangleUpperSolid 15 100
-  , translate 0 100 $ rotate angle $ color white $ pictures $ circleSolid 15 :
-      [ rotate (120 * n) $ rectangleUpperSolid 15 80
+  [ contoured 2 $ color (greyN 0.95) $ rectangleUpperSolid 15 100
+  , contoured 2 $ translate 0 100 $ rotate angle $ color white $ pictures
+      $ circleSolid 15 :
+      [ rotate (120 * n) $ rectangleUpperSolid 15 70
       | n <- [1,2,3]
       ]
   ]
