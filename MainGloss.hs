@@ -59,8 +59,7 @@ onCoffee pos = abs x < fst coffeeCupSize && abs y < snd coffeeCupSize
 coffeeCup :: CoffeeState -> Picture
 coffeeCup coffeeState = pictures
   -- The cup
-  [ translate (-40) 60 $ pictures
-    [color white $ circleSolid 50, color backgroundColor $ circleSolid 30]
+  [ translate (-40) 60 $ color white $ thickCircle 50 10
   , color white $ uncurry rectangleUpperSolid coffeeCupSize
   -- The coffee
   , color (dark $ dark $ dark $ dark yellow)
@@ -96,7 +95,7 @@ solarPower = color (dark blue) $ pictures
     down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
 
 
--- | Draw a picture for the current weather
+-- | Draw a picture for the current weather.
 weatherPicture :: Weather -> Picture
 weatherPicture (Weather Sunny _)  = translate (-100) 0 $ color yellow $ pictures
   $ circleSolid 40 : [ rotate (45 * n) $ rectangleSolid 5 140 | n <- [0..3] ]
@@ -112,7 +111,7 @@ weatherPicture (Weather Night _)  = translate 100 0 $ pictures
   , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
   ]
 
--- | Combine all graphics into one picture
+-- | Combine all graphics into one picture.
 graphics :: (CoffeeState, Energy, Weather) -> Picture
 graphics (coffeeState, batteryLevel, weather) = translate 0 (-200) $ pictures
   [ uncurry translate coffeePos $ pictures
