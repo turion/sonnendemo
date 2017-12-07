@@ -98,16 +98,16 @@ solarPower = color (dark blue) $ pictures
 
 -- | Draw a picture for the current weather
 weatherPicture :: Weather -> Picture
-weatherPicture Sunny  = translate (-100) 0 $ color yellow $ pictures
+weatherPicture (Weather Sunny _)  = translate (-100) 0 $ color yellow $ pictures
   $ circleSolid 40 : [ rotate (45 * n) $ rectangleSolid 5 140 | n <- [0..3] ]
-weatherPicture Cloudy = color (greyN 0.5) $ pictures
+weatherPicture (Weather Cloudy _) = color (greyN 0.5) $ pictures
   [ translate (-40)  0 $ circleSolid 20
   , translate   35  20 $ circleSolid 10
   , translate (-15) 10 $ circleSolid 30
   , translate   15  10 $ circleSolid 30
   , translate   45   0 $ circleSolid 20
   ]
-weatherPicture Night  = translate 100 0 $ pictures
+weatherPicture (Weather Night _)  = translate 100 0 $ pictures
   [ color (light yellow) $ circleSolid 40
   , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
   ]

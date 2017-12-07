@@ -1,5 +1,6 @@
-{-# LANGUAGE Arrows       #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE Arrows          #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeFamilies    #-}
 module SonnenModel where
 
 
@@ -47,14 +48,18 @@ coffeeEnergy :: Energy
 coffeeEnergy = 0.9
 
 -- | The maximum power that can be drained from or charged to the battery.
---   Coincidentally the same power needed to brew coffee.
 batteryMaxPower :: Power
-batteryMaxPower = coffeeEnergy / brewingTime
+batteryMaxPower = 1
+
+-- | The minimum time under which the battery is required to be able to
+--   supply primary control/balancing power.
+batteryBalancingTime :: Time
+batteryBalancingTime = 1
 
 -- | The minimum charge that must remain in the battery
 --   in order to supply primary control/balancing power.
 batteryBalancingMargin :: Energy
-batteryBalancingMargin = 0.5
+batteryBalancingMargin = batteryMaxPower * batteryBalancingTime
 
 -- TODO Use BehaviourF everywhere
 
@@ -64,9 +69,10 @@ gameLogic
   => SyncSF m cl Bool (CoffeeState, Energy, Weather)
 -- BehaviourF m Time Bool (CoffeeState, Energy, Weather)
 gameLogic = feedback 0 $ proc (coffeeRequest, batteryLevel) -> do
-  weather       <- safely weatherStates -< ()
+  weather       <- theWeather           -< ()
+  let Weather {..} = weather
   coffeeState   <- safely gameStates    -< (coffeeRequest, batteryLevel)
-  batteryLevel' <- batterySim           -< ( (solarPlant weather, coffeeState)
+  batteryLevel' <- batterySim           -< ( (solarPlant sun, coffeeState)
                                            , batteryLevel)
   returnA                               -< ( (coffeeState, batteryLevel', weather)
                                            , batteryLevel')
@@ -101,25 +107,60 @@ batterySim = proc ((solarPower, coffeeState), batteryLevel) -> do
   integral -< batteryTotalPower
 
 
--- | The possible states the weather can be in.
-data Weather = Sunny | Cloudy | Night
+data Weather = Weather
+  { sun  :: Sun
+  , wind :: Wind
+  }
   deriving Show
 
-
--- | Cycles through different weather states every 12 time steps.
---   Weather states were randomly selected by me ;)
-weatherStates
+theWeather
   :: (Monad m, Clock m cl, Diff (TimeDomainOf cl) ~ Float)
-  => SyncExcept m cl a Weather Empty
+  => SyncSF m cl a Weather
+theWeather = proc _ -> do
+  sun  <- safely sunStates  -< ()
+  wind <- safely windStates -< ()
+  returnA                   -< Weather {..}
+
+
+-- | The possible states the sun can be in.
+data Sun = Sunny | Cloudy | Night
+  deriving Show
+
+-- | Cycles through different sun states every 12 time steps.
+--   The states were randomly selected by me ;)
+sunStates
+  :: (Monad m, Clock m cl, Diff (TimeDomainOf cl) ~ Float)
+  => SyncExcept m cl a Sun Empty
 --BehaviourFExcept m Float a Weather Empty
-weatherStates = do
+sunStates = do
   sequence_ [ try $ timer 12 >>> arr (const weather)
             | weather <- [Sunny, Night, Cloudy, Night]
             ]
-  weatherStates
+  sunStates
 
--- | Determines the power of the solar plant depending on the weather.
-solarPlant :: Weather -> Float
-solarPlant Sunny  = batteryMaxPower * 0.8
-solarPlant Cloudy = batteryMaxPower / 4
+-- | Determines the power of the solar plant depending on the sun.
+solarPlant :: Sun -> Float
+solarPlant Sunny  = batteryMaxPower * 0.5
+solarPlant Cloudy = batteryMaxPower * 0.2
 solarPlant Night  = 0
+
+-- | The possible wind strengths
+data Wind = Normal | Strong | Weak
+  deriving Show
+
+windStates
+  :: (Monad m, Clock m cl, Diff (TimeDomainOf cl) ~ Float)
+  => SyncExcept m cl a Wind Empty
+windStates = do
+  try $ timer 7.5                  >>> arr (const Normal)
+  try $ timer batteryBalancingTime >>> arr (const Strong)
+  try $ timer 9.5                  >>> arr (const Normal)
+  try $ timer batteryBalancingTime >>> arr (const Weak)
+  windStates
+
+-- | Determines the power (or lack thereof)
+--   of the wind turbine depending on the weather.
+windTurbine :: Wind -> Float
+windTurbine Normal = batteryMaxPower * 0.2
+windTurbine Strong = batteryMaxPower * 0.5
+windTurbine Weak   = batteryMaxPower * (-0.5)
