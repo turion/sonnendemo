@@ -142,6 +142,10 @@ sunPicture Night  = translate 100 0 $ pictures
   , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
   ]
 
+-- | Horizontal position of the wind turbine
+windTurbinePosX :: Float
+windTurbinePosX = -300
+
 -- | Draw a picture of the wind turbine where the rotors are at the given angle.
 windTurbinePicture :: Float -> Picture
 windTurbinePicture angle = pictures
@@ -177,10 +181,10 @@ graphics = proc (coffeeState, batteryLevel, Weather {..}) -> do
               , polygon [( 40, 100), (0, 0), (0, 15)]
               ]
       ]
-    , uncurry translate batteryPos $ battery batteryLevel
     , translate 0 400 $ sunPicture sun
     , uncurry translate solarPowerPos solarPower
-    , translate (-300) 0 $ windTurbinePicture windTurbineAngle
+    , translate windTurbinePosX 0 $ windTurbinePicture windTurbineAngle
+    , uncurry translate batteryPos $ battery batteryLevel
     , translate 100 (-20) $ house
     ]
 
