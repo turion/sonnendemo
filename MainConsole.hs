@@ -45,7 +45,7 @@ console = arrMSync consoleOutput
 mainRhine = syncId                       @@  rescaleClockFloat StdinClock
         >-- collect                      -@- concurrently
         --> game                         @@  rescaleClockFloat waitClock
-        >-- keepLast (Empty, 0, Sunny)   -@- concurrently
+        >-- keepLast (Empty, 0, Weather Sunny Normal) -@- concurrently
         --> console                      @@  rescaleClockFloat waitClock
 
 main :: IO ()
