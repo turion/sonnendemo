@@ -86,19 +86,25 @@ battery batteryLevel = pictures
     $ snd batterySize * batteryLevel / batteryCapacity
   ]
 
+wireThickness :: Float
+wireThickness = 5
+
+-- | Draw a wire of a given length
+wire :: Float -> Picture
+wire = color (greyN 0.05) . rectangleUpperSolid wireThickness
+
 -- | Draw a little solar plant, with wires.
 solarPower :: Picture
-solarPower = color (dark blue) $ pictures
-  [ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
-  , rotate 180 $ rectangleUpperSolid wire down
-  , translate 0 (wire / 2 - down)
-    $ rotate 270 $ rectangleUpperSolid wire
+solarPower = pictures
+  [ color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
+  , rotate 180 $ wire down
+  , translate 0 (wireThickness / 2 - down)
+    $ rotate 270 $ wire
     $ fst solarPowerPos - fst batteryPos + fst batterySize
   ]
   where
     h    = (0 ,  10)
     w    = (50, -30)
-    wire = 5
     down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
 
 -- | A house containing the battery and the coffee machine.
