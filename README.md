@@ -1,25 +1,46 @@
 # README
---------
+
 
 [![Build Status](https://travis-ci.org/turion/sonnendemo.svg?branch=master)](https://travis-ci.org/turion/sonnendemo)
 
 This is a simple example game for the gloss bindings
-for [Rhine](https://github.com/turion/rhine)
-, an asynchronous functional reactive programming library.
+for [Rhine](https://github.com/turion/rhine),
+an asynchronous functional reactive programming library.
 
 ## Installation
 
 ```
 git clone https://github.com/turion/sonnendemo
 cd sonnendemo
+```
+
+### With cabal
+
+```
 cabal sandbox init
 cabal install --only-dependencies
+cabal build
 ```
+
+### With stack
+
+```
+stack build
+```
+
 
 ## Play
 
+### With cabal
+
 To play it, simply run `cabal run sonnendemo` for a GUI version,
 or `cabal run sonnendemo-console` for a console version.
+
+### With stack
+Run `stack exec sonnendemo` for a GUI version,
+or `stack exec sonnendemo-console` for a console version.
+
+### The game
 
 The objective of the game is to drink coffee.
 The coffee machine runs on renewable energy, of course,

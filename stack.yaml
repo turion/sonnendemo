@@ -1,0 +1,8 @@
+resolver: lts-9.17
+extra-deps:
+  - dunai-0.3.0.0
+  - rhine-0.3.0.0
+  - rhine-gloss-0.3.0.0
+nix:
+  enable: true
+  packages: [mesa freeglut]
