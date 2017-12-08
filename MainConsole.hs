@@ -83,6 +83,6 @@ type RescaledClockFloat cl = RescaledClock cl UTCTimeFloat
 -- | The rescaled clock value.
 rescaleClockFloat :: TimeDomainOf cl ~ UTCTime => cl -> RescaledClockFloat cl
 rescaleClockFloat cl = RescaledClock
-  { rescale = UTCTimeFloat
+  { rescale       = UTCTimeFloat
   , unscaledClock = cl
   }

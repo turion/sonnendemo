@@ -187,7 +187,6 @@ sunPicture Night  = translate 100 0 $ pictures
   ]
 
 
-
 -- ** Combining everything
 
 -- | Combine all graphics into one picture.
