@@ -186,6 +186,52 @@ sunPicture Night  = translate 100 0 $ pictures
   , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
   ]
 
+-- ** Animated descriptions
+
+dancingArrow :: Monad m => Behaviour m Float Picture
+dancingArrow = proc _ -> do
+  time <- timeInfoOf absolute -< ()
+  returnA                     -< contoured 2 $ greyN 0.7 $ pictures
+    [ rotate (-135) $ translate (-d/2) $ rectangleUpperSolid d h
+    , rotate   225  $ translate (-d/2) $ rectangleUpperSolid d h
+    , rotate   180  $ rectangleUpperSolid d l
+    ]
+  where
+    d = 20
+    h = 50
+    l = 60
+
+description :: Monad m => BehaviourF m Float String Picture
+description = proc string -> do
+  arrow <- dancingArrow -< ()
+  returnA               -< pictures
+    [ arrow
+    , translate 20 0 $ scale 0.2 0.2 $ string
+    ]
+
+-- | @slowly as dt@ returns the first @n@ elements of @as@ after the time @n * dt@.
+slowly :: (Monad m, RealFrac (Diff td)) => [a] -> Diff td -> Behaviour m td [a]
+slowly as dt = proc _ -> do
+  time <- integrate -< 1 / dt
+  returnA           -< take (round time) as
+
+
+-- | When playing for the first times, give helpful text descriptions.
+tutorialDescriptions :: BehaviorF m Float ModelState Picture
+tutorialDescriptions = safely $ do
+  try $ arr (batteryLevel >>> (>= coffeeEnergy + batteryBalancingMargin))
+    >>> throwOn ()
+    >>> slowly "Welcome to sonnendemo!\n Wait until the battery is charged..." 0.2
+    >>> description
+  try $ proc ModelState { weather = Weather {..} } -> do
+    time <- timeSinceSimStart -< ()
+    _    <- throwOn ()        -< time > 4 && wind == Strong
+    description <<< slowly "Click on the cup to make a coffee!" 0.2 -< ()
+  -- ...
+  safe $ arr $ const Blank
+
+forAtLeast :: Diff td -> BehaviorFExcept m td a b e -> BehaviorF (ExceptT e m) td a b
+forAtLeast dt e = runMSFExcept $ timer dt >> e
 
 -- ** Combining everything
 
