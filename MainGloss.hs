@@ -26,10 +26,14 @@ import SonnenModel
 import Util
 
 
--- * Some global variables for important elements on the screen
+-- * Important graphical elements
 
 backgroundColor :: Color
 backgroundColor = mixColors 10 20 green white
+
+-- ** In the house
+
+-- *** The coffee cup
 
 -- | The position of the coffee cup on the screen.
 coffeePos :: Point
@@ -41,20 +45,6 @@ coffeeSize = (50, 100)
 -- | The size of the coffee cup rectangle that responds to mouse clicks.
 coffeeCupSize :: Vector
 coffeeCupSize = coffeeSize ^+^ (30, 30)
-
-batteryPos :: Point
-batteryPos = (0, 0)
-
-batterySize :: Vector
-batterySize = (30, 100)
-
-solarPowerPos :: Point
-solarPowerPos = (-150, 200)
-
-windTurbineHeight :: Float
-windTurbineHeight = 100
-
--- TODO Spread the coordinates to the graphics where they are needed
 
 -- | Determines whether a mouse click is inside the coffee cup.
 onCoffee :: Point -> Bool
@@ -77,6 +67,14 @@ coffeeCup coffeeState = contoured 2 $ pictures
     $ snd coffeeSize * coffeeLevel coffeeState
   ]
 
+-- *** The battery
+
+batteryPos :: Point
+batteryPos = (0, 0)
+
+batterySize :: Vector
+batterySize = (30, 100)
+
 -- | Draw a battery, filled to a given energy level.
 battery :: Energy -> Picture
 battery batteryLevel = contoured 2 $ pictures
@@ -88,26 +86,7 @@ battery batteryLevel = contoured 2 $ pictures
     $ snd batterySize * batteryLevel / batteryCapacity
   ]
 
-wireThickness :: Float
-wireThickness = 5
-
--- | Draw a wire of a given length
-wire :: Float -> Picture
-wire = color (greyN 0.05) . rectangleUpperSolid wireThickness
-
--- | Draw a little solar plant, with wires.
-solarPower :: Picture
-solarPower = pictures
-  [ color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
-  , rotate 180 $ wire down
-  , translate 0 (wireThickness / 2 - down)
-    $ rotate 270 $ wire
-    $ fst solarPowerPos - fst batteryPos + fst batterySize
-  ]
-  where
-    h    = (0 ,  10)
-    w    = (50, -30)
-    down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
+-- *** The house
 
 -- | A house containing the battery and the coffee machine.
 house :: Picture
@@ -128,21 +107,34 @@ house = contoured 2 $ pictures $
     w = 160
     d = 10
 
--- | Draw a picture for the current state of the sun.
-sunPicture :: Sun -> Picture
-sunPicture Sunny  = color yellow $ pictures
-  $ circleSolid 40 : [ rotate (45 * n) $ rectangleSolid 5 140 | n <- [0..3] ]
-sunPicture Cloudy = translate (-100) 0 $ color (greyN 0.5) $ pictures
-  [ translate (-40)  0 $ circleSolid 20
-  , translate   35  20 $ circleSolid 10
-  , translate (-15) 10 $ circleSolid 30
-  , translate   15  10 $ circleSolid 30
-  , translate   45   0 $ circleSolid 20
+
+-- ** The power plants
+
+-- *** The solar plant
+
+solarPowerPos :: Point
+solarPowerPos = (-150, 200)
+
+
+-- | Draw a little solar plant, with wires.
+solarPower :: Picture
+solarPower = pictures
+  [ color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
+  , rotate 180 $ wire down
+  , translate 0 (wireThickness / 2 - down)
+    $ rotate 270 $ wire
+    $ fst solarPowerPos - fst batteryPos + fst batterySize
   ]
-sunPicture Night  = translate 100 0 $ pictures
-  [ color (light yellow) $ circleSolid 40
-  , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
-  ]
+  where
+    h    = (0 ,  10)
+    w    = (50, -30)
+    down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
+
+
+-- *** The wind turbine
+
+windTurbineHeight :: Float
+windTurbineHeight = 100
 
 -- | Horizontal position of the wind turbine
 windTurbinePosX :: Float
@@ -166,6 +158,37 @@ windTurbineSpeed Normal = 50
 windTurbineSpeed Strong = 100
 windTurbineSpeed Weak   = 5
 
+-- *** The wiring
+
+wireThickness :: Float
+wireThickness = 5
+
+-- | Draw a wire of a given length
+wire :: Float -> Picture
+wire = color (greyN 0.05) . rectangleUpperSolid wireThickness
+
+
+-- *** The weather
+
+-- | Draw a picture for the current state of the sun.
+sunPicture :: Sun -> Picture
+sunPicture Sunny  = color yellow $ pictures
+  $ circleSolid 40 : [ rotate (45 * n) $ rectangleSolid 5 140 | n <- [0..3] ]
+sunPicture Cloudy = translate (-100) 0 $ color (greyN 0.5) $ pictures
+  [ translate (-40)  0 $ circleSolid 20
+  , translate   35  20 $ circleSolid 10
+  , translate (-15) 10 $ circleSolid 30
+  , translate   15  10 $ circleSolid 30
+  , translate   45   0 $ circleSolid 20
+  ]
+sunPicture Night  = translate 100 0 $ pictures
+  [ color (light yellow) $ circleSolid 40
+  , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
+  ]
+
+
+
+-- ** Combining everything
 
 -- | Combine all graphics into one picture.
 graphics :: Monad m => BehaviourF m Float (CoffeeState, Energy, Weather) Picture
