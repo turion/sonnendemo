@@ -119,11 +119,11 @@ solarPowerPos = (-150, 200)
 -- | Draw a little solar plant, with wires.
 solarPower :: Picture
 solarPower = pictures
-  [ color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
-  , rotate 180 $ wire down
+  [ rotate 180 $ wire down
   , translate 0 (wireThickness / 2 - down)
     $ rotate 270 $ wire
     $ fst solarPowerPos - fst batteryPos + fst batterySize
+  , color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
   ]
   where
     h    = (0 ,  10)
