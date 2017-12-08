@@ -2,9 +2,11 @@
 Game events (mouse clicks) are captured
 -}
 
-{-# LANGUAGE Arrows          #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeFamilies    #-}
+{-# LANGUAGE Arrows            #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TypeFamilies      #-}
 module Main where
 
 -- gloss
@@ -12,7 +14,6 @@ import Graphics.Gloss.Interface.Pure.Game -- TODO This should be reexported by r
 
 -- dunai
 import Data.VectorSpace
-import Data.VectorSpace.Tuples ()
 
 -- rhine
 import FRP.Rhine
@@ -22,12 +23,17 @@ import FRP.Rhine.Gloss
 
 -- sonnendemo
 import SonnenModel
+import Util
 
 
--- * Some global variables for important elements on the screen
+-- * Important graphical elements
 
 backgroundColor :: Color
 backgroundColor = mixColors 10 20 green white
+
+-- ** In the house
+
+-- *** The coffee cup
 
 -- | The position of the coffee cup on the screen.
 coffeePos :: Point
@@ -40,20 +46,6 @@ coffeeSize = (50, 100)
 coffeeCupSize :: Vector
 coffeeCupSize = coffeeSize ^+^ (30, 30)
 
-batteryPos :: Point
-batteryPos = (0, 0)
-
-batterySize :: Vector
-batterySize = (30, 100)
-
-solarPowerPos :: Point
-solarPowerPos = (-150, 200)
-
-windTurbineHeight :: Float
-windTurbineHeight = 100
-
--- TODO Spread the coordinates to the graphics where they are needed
-
 -- | Determines whether a mouse click is inside the coffee cup.
 onCoffee :: Point -> Bool
 onCoffee pos = abs x < fst coffeeCupSize && abs y < snd coffeeCupSize
@@ -64,7 +56,7 @@ onCoffee pos = abs x < fst coffeeCupSize && abs y < snd coffeeCupSize
 
 -- | Draw a cup of coffee, filled according to the given 'CoffeeState'.
 coffeeCup :: CoffeeState -> Picture
-coffeeCup coffeeState = pictures
+coffeeCup coffeeState = contoured 2 $ pictures
   -- The cup
   [ translate (-40) 60 $ color white $ thickCircle 50 10
   , color white $ uncurry rectangleUpperSolid coffeeCupSize
@@ -75,9 +67,17 @@ coffeeCup coffeeState = pictures
     $ snd coffeeSize * coffeeLevel coffeeState
   ]
 
+-- *** The battery
+
+batteryPos :: Point
+batteryPos = (0, 0)
+
+batterySize :: Vector
+batterySize = (30, 100)
+
 -- | Draw a battery, filled to a given energy level.
 battery :: Energy -> Picture
-battery batteryLevel = pictures
+battery batteryLevel = contoured 2 $ pictures
   [ color (dark blue) $ uncurry rectangleUpperSolid $ batterySize ^+^ (30, 30)
   , color (greyN 80) $ translate 0 10 $ uncurry rectangleUpperSolid batterySize
   , color (light blue)
@@ -86,30 +86,11 @@ battery batteryLevel = pictures
     $ snd batterySize * batteryLevel / batteryCapacity
   ]
 
-wireThickness :: Float
-wireThickness = 5
-
--- | Draw a wire of a given length
-wire :: Float -> Picture
-wire = color (greyN 0.05) . rectangleUpperSolid wireThickness
-
--- | Draw a little solar plant, with wires.
-solarPower :: Picture
-solarPower = pictures
-  [ color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
-  , rotate 180 $ wire down
-  , translate 0 (wireThickness / 2 - down)
-    $ rotate 270 $ wire
-    $ fst solarPowerPos - fst batteryPos + fst batterySize
-  ]
-  where
-    h    = (0 ,  10)
-    w    = (50, -30)
-    down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
+-- *** The house
 
 -- | A house containing the battery and the coffee machine.
 house :: Picture
-house = pictures $
+house = contoured 2 $ pictures $
   [ scale x 1 $ color (greyN 0.3) $ pictures
     [ translate 0 (d/2) $ rotate 90 $ rectangleUpperSolid d w
     , translate w 0 $ rectangleUpperSolid d h
@@ -125,6 +106,69 @@ house = pictures $
     h = 140
     w = 160
     d = 10
+
+
+-- ** The power plants
+
+-- *** The solar plant
+
+solarPowerPos :: Point
+solarPowerPos = (-150, 200)
+
+
+-- | Draw a little solar plant, with wires.
+solarPower :: Picture
+solarPower = pictures
+  [ color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
+  , rotate 180 $ wire down
+  , translate 0 (wireThickness / 2 - down)
+    $ rotate 270 $ wire
+    $ fst solarPowerPos - fst batteryPos + fst batterySize
+  ]
+  where
+    h    = (0 ,  10)
+    w    = (50, -30)
+    down = snd solarPowerPos - snd batteryPos - snd batterySize / 2
+
+
+-- *** The wind turbine
+
+windTurbineHeight :: Float
+windTurbineHeight = 100
+
+-- | Horizontal position of the wind turbine
+windTurbinePosX :: Float
+windTurbinePosX = -300
+
+-- | Draw a picture of the wind turbine where the rotors are at the given angle.
+windTurbinePicture :: Float -> Picture
+windTurbinePicture angle = pictures
+  [ translate 0 10 $ rotate (-90) $ wire $ windTurbinePosX - fst batteryPos
+  , contoured 2 $ color (greyN 0.95) $ rectangleUpperSolid 15 100
+  , contoured 2 $ translate 0 100 $ rotate angle $ color white $ pictures
+      $ circleSolid 15 :
+      [ rotate (120 * n) $ rectangleUpperSolid 15 80
+      | n <- [1,2,3]
+      ]
+  ]
+
+-- | Determines how many degrees per second the wind turbine will turn.
+windTurbineSpeed :: Wind -> Float
+windTurbineSpeed Normal = 50
+windTurbineSpeed Strong = 100
+windTurbineSpeed Weak   = 5
+
+-- *** The wiring
+
+wireThickness :: Float
+wireThickness = 5
+
+-- | Draw a wire of a given length
+wire :: Float -> Picture
+wire = color (greyN 0.05) . rectangleUpperSolid wireThickness
+
+
+-- *** The weather
 
 -- | Draw a picture for the current state of the sun.
 sunPicture :: Sun -> Picture
@@ -142,27 +186,9 @@ sunPicture Night  = translate 100 0 $ pictures
   , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
   ]
 
--- | Horizontal position of the wind turbine
-windTurbinePosX :: Float
-windTurbinePosX = -300
 
--- | Draw a picture of the wind turbine where the rotors are at the given angle.
-windTurbinePicture :: Float -> Picture
-windTurbinePicture angle = pictures
-  [ translate 0 10 $ rotate (-90) $ wire $ windTurbinePosX - fst batteryPos
-  , color (greyN 0.95) $ rectangleUpperSolid 15 100
-  , translate 0 100 $ rotate angle $ color white $ pictures $ circleSolid 15 :
-      [ rotate (120 * n) $ rectangleUpperSolid 15 80
-      | n <- [1,2,3]
-      ]
-  ]
 
--- | Determines how many degrees per second the wind turbine will turn.
-windTurbineSpeed :: Wind -> Float
-windTurbineSpeed Normal = 50
-windTurbineSpeed Strong = 100
-windTurbineSpeed Weak   = 5
-
+-- ** Combining everything
 
 -- | Combine all graphics into one picture.
 graphics :: Monad m => BehaviourF m Float (CoffeeState, Energy, Weather) Picture
