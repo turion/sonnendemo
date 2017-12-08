@@ -36,17 +36,18 @@ game
        [a] (CoffeeState, Energy, Weather)
 game = arr (not . null) >-> gameLogic
 
--- | The console loop.
+-- | The console output loop.
 console
   :: SyncSF IO (RescaledClockFloat (Millisecond 2000))
        (CoffeeState, Energy, Weather) ()
 console = arrMSync consoleOutput
 
-mainRhine = syncId                       @@  rescaleClockFloat StdinClock
-        >-- collect                      -@- concurrently
-        --> game                         @@  rescaleClockFloat waitClock
-        >-- keepLast (Empty, 0, Weather Sunny Normal) -@- concurrently
-        --> console                      @@  rescaleClockFloat waitClock
+mainRhine
+  =   syncId                                    @@  rescaleClockFloat StdinClock
+  >-- collect                                   -@- concurrently
+  --> game                                      @@  rescaleClockFloat waitClock
+  >-- keepLast (Empty, 0, Weather Sunny Normal) -@- concurrently
+  --> console                                   @@  rescaleClockFloat waitClock
 
 main :: IO ()
 main = flow mainRhine
