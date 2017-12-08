@@ -27,8 +27,8 @@ humanPrintWeather Weather {..} = humanPrintSun sun ++ ", " ++ humanPrintWind win
     humanPrintWind Strong = "but the wind is strong! We need to absorb energy from the grid!"
 
 -- | The method to print a status message.
-consoleOutput :: (CoffeeState, Energy, Weather) -> IO ()
-consoleOutput (coffeeState, batteryLevel, weather) = do
+consoleOutput :: ModelState -> IO ()
+consoleOutput ModelState {..} = do
   putStrLn $ humanPrintWeather weather
   putStrLn $ "The battery is charged at "
           ++ show (round $ batteryLevel * 100 / batteryCapacity)
@@ -43,22 +43,26 @@ consoleOutput (coffeeState, batteryLevel, weather) = do
 
 -- | The game loop.
 game
-  :: SyncSF IO (RescaledClockFloat (Millisecond 40))
-       [a] (CoffeeState, Energy, Weather)
+  :: SyncSF IO (RescaledClockFloat (Millisecond 40)) [a] ModelState
 game = arr (not . null) >-> gameLogic
 
 -- | The console output loop.
-console
-  :: SyncSF IO (RescaledClockFloat (Millisecond 2000))
-       (CoffeeState, Energy, Weather) ()
+console :: SyncSF IO (RescaledClockFloat (Millisecond 2000)) ModelState ()
 console = arrMSync consoleOutput
 
 mainRhine
-  =   syncId                                    @@  rescaleClockFloat StdinClock
-  >-- collect                                   -@- concurrently
-  --> game                                      @@  rescaleClockFloat waitClock
-  >-- keepLast (Empty, 0, Weather Sunny Normal) -@- concurrently
-  --> console                                   @@  rescaleClockFloat waitClock
+  =   syncId             @@  rescaleClockFloat StdinClock
+  >-- collect            -@- concurrently
+  --> game               @@  rescaleClockFloat waitClock
+  >-- keepLast initModel -@- concurrently
+  --> console            @@  rescaleClockFloat waitClock
+  where
+    initModel = ModelState
+      { coffeeState  = Empty
+      , batteryLevel = 0
+      , weather      = Weather Sunny Normal
+      , nCoffees     = 0
+      }
 
 main :: IO ()
 main = flow mainRhine

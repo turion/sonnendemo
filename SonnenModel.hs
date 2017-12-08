@@ -4,6 +4,7 @@ the type 'BehaviourF' is used, which is clock-polymorphic.
 -}
 
 {-# LANGUAGE Arrows          #-}
+{-# LANGUAGE RankNTypes      #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies    #-}
 module SonnenModel where
@@ -30,7 +31,7 @@ data CoffeeState
   | Brewing CoffeeLevel
   | Full
   | Drinking CoffeeLevel
-  deriving Show
+  deriving (Eq, Show)
 
 isEmpty :: CoffeeState -> Bool
 isEmpty Empty = True
@@ -185,18 +186,59 @@ windTurbine Weak   = batteryMaxPower * (-0.5)
 
 -- * Putting everything together
 
+
+data ModelState = ModelState
+  { coffeeState  :: CoffeeState
+  , batteryLevel :: Energy
+  , weather      :: Weather
+  , nCoffees     :: Integer
+  }
+
 -- | The logic of the whole model.
 --   Requests to make coffees can be input
---   (where 'True' represents a request, and 'False' no request),
---   and the current state of the coffee machine and cup,
---   the battery charge level and the current weather are output.
+--   (where 'True' represents a request, and 'False' no request).
+--   The current state of the coffee machine and cup,
+--   the battery charge level, the current weather,
+--   and the number of drunk coffees are output.
 gameLogic
   :: (Monad m, TimeDomain td, Diff td ~ Float)
-  => BehaviorF m td Bool (CoffeeState, Energy, Weather)
-gameLogic = feedback 0 $ proc (coffeeRequest, batteryLevel) -> do
+  => BehaviorF m td Bool ModelState
+gameLogic = feedback 0 $ proc (coffeeRequest, batteryLevelOld) -> do
   weather       <- theWeather          -< ()
-  coffeeState   <- safely coffeeStates -< (coffeeRequest, batteryLevel)
-  batteryLevel' <- batterySim          -< ( (weather, coffeeState)
-                                          , batteryLevel)
-  returnA                              -< ( (coffeeState, batteryLevel', weather)
-                                          , batteryLevel')
+  coffeeState   <- safely coffeeStates -< (coffeeRequest, batteryLevelOld)
+  drunkCoffee   <- edgeTo Empty Empty  -< coffeeState
+  nCoffees      <- sumS                -< if drunkCoffee then 1 else 0
+  batteryLevel  <- batterySim          -< ( (weather, coffeeState)
+                                          , batteryLevelOld)
+  returnA                              -< ( ModelState {..}, batteryLevel )
+
+
+-- * Utilities, to be ported to dunai or rhine
+
+{- |
+Emits 'True' when the input value changes
+from the first given argument to the second given argument.
+
+Note: @edgeFromTo a1 a2 a2@ will not trigger an edge on the first tick,
+whereas @edgeFromTo a1 a2 a1@ will trigger an edge on the first tick.
+-}
+edgeFromTo
+  :: (Monad m, Eq a)
+  => a -- ^ The old value that the signal should have before the edge
+  -> a -- ^ The new value that the signal should have _now_ to trigger the edge
+  -> a -- ^ The initialisation value of the delay (the signal value at tick -1).
+  -> BehaviourF m td a Bool
+edgeFromTo aOld aNew aInit = proc a -> do
+  aPrevious <- delay aInit -< a
+  returnA                  -< a == aNew && aPrevious == aOld
+
+-- | Emits 'True' when the input value changes
+--   to the given argument, from any other value.
+edgeTo
+  :: (Monad m, Eq a)
+  => a -- ^ The new value that the signal should have _now_ to trigger the edge
+  -> a -- ^ The initialisation value of the delay (the signal value at tick -1).
+  -> BehaviourF m td a Bool
+edgeTo aNew aInit = proc a -> do
+  aPrevious <- delay aInit -< a
+  returnA                  -< a == aNew && aPrevious /= aNew

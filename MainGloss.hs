@@ -191,8 +191,8 @@ sunPicture Night  = translate 100 0 $ pictures
 -- ** Combining everything
 
 -- | Combine all graphics into one picture.
-graphics :: Monad m => BehaviourF m Float (CoffeeState, Energy, Weather) Picture
-graphics = proc (coffeeState, batteryLevel, Weather {..}) -> do
+graphics :: Monad m => BehaviourF m Float ModelState Picture
+graphics = proc ModelState { weather = Weather {..}, .. } -> do
   windTurbineAngle <- integral <<< average 0.3 -< windTurbineSpeed wind
   returnA                                      -< translate 0 (-200) $ pictures
     [ uncurry translate coffeePos $ pictures
