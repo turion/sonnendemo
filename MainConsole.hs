@@ -3,6 +3,9 @@
 {-# LANGUAGE TypeFamilies    #-}
 module Main where
 
+-- base
+import Data.Char (toLower)
+
 -- rhine
 import FRP.Rhine
 import FRP.Rhine.Clock.Realtime.Stdin
@@ -15,13 +18,21 @@ import FRP.Rhine.Schedule.Concurrently
 import SonnenModel
 
 
+humanPrintWeather :: Weather -> String
+humanPrintWeather Weather {..} = humanPrintSun sun ++ ", " ++ humanPrintWind wind
+  where
+    humanPrintSun  sun    = "It's " ++ (toLower <$> show sun)
+    humanPrintWind Normal = "and the wind is normal."
+    humanPrintWind Weak   = "but the wind is low! We need to pump energy in the grid!"
+    humanPrintWind Strong = "but the wind is strong! We need to absorb energy from the grid!"
+
 -- | The method to print a status message.
 consoleOutput :: (CoffeeState, Energy, Weather) -> IO ()
 consoleOutput (coffeeState, batteryLevel, weather) = do
-  putStrLn $ "The weather is " ++ show weather ++ "."
+  putStrLn $ humanPrintWeather weather
   putStrLn $ "The battery is charged at "
-          ++ show (batteryLevel * 100 / batteryCapacity)
-          ++ " %."
+          ++ show (round $ batteryLevel * 100 / batteryCapacity)
+          ++ "%."
   putStrLn $ case coffeeState of
     Empty      -> if batteryLevel < batteryBalancingMargin + coffeeEnergy
                     then "Your coffee is empty and the battery is low... :("
