@@ -212,6 +212,8 @@ graphics = proc ModelState { weather = Weather {..}, .. } -> do
     , translate windTurbinePosX 0 $ windTurbinePicture windTurbineAngle
     , uncurry translate batteryPos $ battery batteryLevel
     , translate 100 (-20) $ house
+    , translate 200 440
+      $ scale 0.2 0.2 $ text $ "Coffees: " ++ show nCoffees
     ]
 
 
