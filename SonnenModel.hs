@@ -60,7 +60,7 @@ coffeeEnergy = brewingTime * batteryMaxPower
 --   depending on user coffee requests and battery charge level.
 coffeeStates
   :: (Monad m, TimeDomain td, Diff td ~ Float)
-  => BehaviourFExcept m td  (Bool, Energy) CoffeeState Empty
+  => BehaviourFExcept m td (Bool, Energy) CoffeeState Empty
 coffeeStates = do
   -- In case there is sufficient battery, start brewing a coffee when requested
   try $ proc (coffeeRequest, batteryLevel) -> do
