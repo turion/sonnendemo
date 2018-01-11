@@ -39,6 +39,7 @@ backgroundColor = mixColors 10 20 green white
 coffeePos :: Point
 coffeePos = (160, 0)
 
+-- | The size of the coffee cup, in the format @(width, height)@.
 coffeeSize :: Vector
 coffeeSize = (50, 100)
 
@@ -51,8 +52,6 @@ onCoffee :: Point -> Bool
 onCoffee pos = abs x < fst coffeeCupSize && abs y < snd coffeeCupSize
   where
     (x, y) = pos ^+^ (0, snd coffeeSize) ^-^ coffeePos -- Relative position
-
--- * The different graphical elements
 
 -- | Draw a cup of coffee, filled according to the given 'CoffeeState'.
 coffeeCup :: CoffeeState -> Picture
