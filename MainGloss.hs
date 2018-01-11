@@ -63,7 +63,7 @@ coffeeCup coffeeState = contoured 2 $ pictures
   [ translate (-40) 60 $ color white $ thickCircle 50 10
   , color white $ uncurry rectangleUpperSolid coffeeCupSize
   -- The coffee
-  , color (dark $ dark $ dark $ dark yellow)
+  , color (dark $ dark $ dark $ dark orange)
     $ translate 0 10
     $ rectangleUpperSolid (fst coffeeSize)
     $ snd coffeeSize * coffeeLevel coffeeState
