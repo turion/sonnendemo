@@ -23,6 +23,26 @@ instance NormedSpace (Float, Float) where
   norm (x, y) = sqrt $ x ^ 2 + y ^ 2
 normalize v = v ^* (1 / norm v)
 
+
+-- | Determines whether a given point is in a given rectangle.
+inRectangle
+  :: Point -- ^ The point to test
+  -> Point -- ^ The centre of the rectangle
+  -> Vector -- ^ The size of the rectangle as @(width, height)@
+  -> Bool
+inRectangle point centre (width, height) = let (x, y) = point ^-^ centre
+  in abs x < width / 2 && abs y < height /2
+
+-- | Determines whether a given point is in a given upper rectangle.
+inUpperRectangle
+  :: Point -- ^ The point to test
+  -> Point -- ^ The base, or bottom, of the rectangle
+  -> Vector -- ^ The size of the rectangle as @(width, height)@
+  -> Bool
+inUpperRectangle point base size
+  = inRectangle point (base ^+^ (0, snd size / 2)) size
+
+
 -- * Gloss utilities
 
 contourPath :: Float -> Path -> Path

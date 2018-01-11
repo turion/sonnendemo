@@ -31,6 +31,10 @@ import Util
 backgroundColor :: Color
 backgroundColor = mixColors 10 20 green white
 
+-- | The amount by which the whole picture is offset vertically.
+yOffset :: Float
+yOffset = -200
+
 -- ** In the house
 
 -- *** The coffee cup
@@ -49,9 +53,7 @@ coffeeCupSize = coffeeSize ^+^ (30, 30)
 
 -- | Determines whether a mouse click is inside the coffee cup.
 onCoffee :: Point -> Bool
-onCoffee pos = abs x < fst coffeeCupSize && abs y < snd coffeeCupSize
-  where
-    (x, y) = pos ^+^ (0, snd coffeeSize) ^-^ coffeePos -- Relative position
+onCoffee pos = inUpperRectangle pos (coffeePos ^+^ (0, yOffset)) coffeeCupSize
 
 -- | Draw a cup of coffee, filled according to the given 'CoffeeState'.
 coffeeCup :: CoffeeState -> Picture
@@ -192,7 +194,7 @@ sunPicture Night  = translate 100 0 $ pictures
 graphics :: Monad m => BehaviourF m Float ModelState Picture
 graphics = proc ModelState { weather = Weather {..}, .. } -> do
   windTurbineAngle <- integral <<< average 0.3 -< windTurbineSpeed wind
-  returnA                                      -< translate 0 (-200) $ pictures
+  returnA                                      -< translate 0 yOffset $ pictures
     [ uncurry translate coffeePos $ pictures
       [ coffeeCup coffeeState
       -- Status symbol whether a coffee can be made
