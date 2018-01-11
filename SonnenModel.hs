@@ -89,7 +89,7 @@ coffeeStates = do
 -- ** The battery
 
 batteryCapacity :: Energy
-batteryCapacity = 4
+batteryCapacity = 8
 
 -- | The maximum power that can be drained from or charged to the battery.
 batteryMaxPower :: Power
@@ -98,7 +98,7 @@ batteryMaxPower = 0.3
 -- | The minimum time under which the battery is required to be able to
 --   supply primary control/balancing power.
 batteryBalancingTime :: Time
-batteryBalancingTime = 4
+batteryBalancingTime = 6
 
 -- | The minimum charge that must remain in the battery
 --   in order to supply primary control/balancing power.

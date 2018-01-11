@@ -211,8 +211,8 @@ description = proc string -> do
   arrow <- dancingArrow -< ()
   returnA               -< pictures
     [ arrow
-    , translate 50 0 $ scale 0.2 0.2 $ pictures
-      [ translate 0 ((-120) * i) $ text line
+    , translate 70 (-50) $ scale 0.2 0.2 $ pictures
+      [ translate 0 ((-130) * i) $ text line
       | (i, line) <- zip [1..] $ lines string
       ]
     ]
@@ -224,11 +224,15 @@ slowly as dt = proc _ -> do
   time <- integral  -< 1 / dt
   returnA           -< take (round time) as
 
+-- | The time for one character to appear in a description.
+charTime :: Float
+charTime = 0.04
+
 placeBelow :: Monad m => Point -> BehaviourF m Float Picture Picture
 placeBelow point = arr $ uncurry translate $ point ^-^ (0, 40)
 
 placeMsg :: Monad m => Point -> String -> BehaviourF m Float () Picture
-placeMsg point msg = slowly msg 0.06 >>> description >>> placeBelow point
+placeMsg point msg = slowly msg charTime >>> description >>> placeBelow point
 
 -- | Create a step in the tutorial descriptions.
 tutorialDescriptionStep
@@ -237,9 +241,11 @@ tutorialDescriptionStep
   -> Point  -- ^ Where to display it
   -> (ModelState -> Bool) -- ^ The condition after which to move to the next step
   -> BehaviourFExcept m Float ModelState Picture ()
-tutorialDescriptionStep msg point condition = try
-  $   throwOnCond condition () >>> arr (const ())
-  >>> placeMsg point msg
+tutorialDescriptionStep msg point condition = try $ proc modelState -> do
+  time <- timeSinceSimStart -< ()
+  _    <- throwOn ()        -< condition modelState
+                            && time > charTime * (fromIntegral $ length msg)
+  placeMsg point msg        -< ()
 
 
 -- | When playing for the first times, give helpful text descriptions.
@@ -263,7 +269,7 @@ tutorialDescriptions = safely $ do
     $ \ModelState {..} -> isEmpty coffeeState
   wind <- try $ proc ModelState { weather = Weather {..} } -> do
     time <- timeSinceSimStart -< ()
-    _    <- throwOn'          -< ( wind `elem` [Strong, Weak] && time > 4
+    _    <- throwOn'          -< ( wind `elem` [Strong, Weak] && time > 6
                                  , wind)
     placeMsg (windTurbinePosX, 0)
       $  "But there is much more to explore!\n"
@@ -343,7 +349,7 @@ glossRhine = buildGlossRhine select game
     select _ = Nothing
 
 main :: IO ()
-main = flowGloss (InWindow "sonnen" (800, 600) (10, 10)) backgroundColor 30 glossRhine
+main = flowGloss (InWindow "sonnen" (1024, 768) (10, 10)) backgroundColor 30 glossRhine
 
 -- * Available in rhine-0.5.0.0
 
