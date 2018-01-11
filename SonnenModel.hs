@@ -37,6 +37,15 @@ isEmpty :: CoffeeState -> Bool
 isEmpty Empty = True
 isEmpty _     = False
 
+isDrinking :: CoffeeState -> Bool
+isDrinking (Drinking _) = True
+isDrinking _            = False
+
+isBrewing :: CoffeeState -> Bool
+isBrewing (Brewing _) = True
+isBrewing _           = False
+
+
 -- | The level to which the cup is filled with coffee.
 coffeeLevel :: CoffeeState -> Float
 coffeeLevel Empty        = 0

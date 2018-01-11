@@ -211,28 +211,88 @@ description = proc string -> do
   arrow <- dancingArrow -< ()
   returnA               -< pictures
     [ arrow
-    , translate 20 0 $ scale 0.2 0.2 $ text string
+    , translate 50 0 $ scale 0.2 0.2 $ pictures
+      [ translate 0 ((-120) * i) $ text line
+      | (i, line) <- zip [1..] $ lines string
+      ]
     ]
 
--- | @slowly as dt@ returns the first @n@ elements of @as@ after the time @n * dt@.
+-- | @slowly as dt@ returns the first @n@ elements
+--   of the list @as@ after the time @n * dt@.
 slowly :: Monad m => [a] -> Float -> Behaviour m Float [a]
 slowly as dt = proc _ -> do
   time <- integral  -< 1 / dt
   returnA           -< take (round time) as
 
+placeBelow :: Monad m => Point -> BehaviourF m Float Picture Picture
+placeBelow point = arr $ uncurry translate $ point ^-^ (0, 40)
+
+placeMsg :: Monad m => Point -> String -> BehaviourF m Float () Picture
+placeMsg point msg = slowly msg 0.06 >>> description >>> placeBelow point
+
+-- | Create a step in the tutorial descriptions.
+tutorialDescriptionStep
+  :: Monad m
+  => String -- ^ The message to display
+  -> Point  -- ^ Where to display it
+  -> (ModelState -> Bool) -- ^ The condition after which to move to the next step
+  -> BehaviourFExcept m Float ModelState Picture ()
+tutorialDescriptionStep msg point condition = try
+  $   throwOnCond condition () >>> arr (const ())
+  >>> placeMsg point msg
+
 
 -- | When playing for the first times, give helpful text descriptions.
 tutorialDescriptions :: Monad m => BehaviorF m Float ModelState Picture
 tutorialDescriptions = safely $ do
-  try $ arr (batteryLevel >>> (>= coffeeEnergy + batteryBalancingMargin))
-    >>> throwOn ()
-    >>> slowly "Welcome to sonnendemo!\n Wait until the battery is charged..." 0.2
-    >>> description
-  try $ proc ModelState { weather = Weather {..} } -> do
+  tutorialDescriptionStep
+    "Welcome to sonnendemo!\nWait until the battery is charged..."
+    batteryPos
+    $ \ModelState {..} -> batteryLevel >= coffeeEnergy + batteryBalancingMargin
+  tutorialDescriptionStep
+    "Click on the cup\nto make a coffee!"
+    coffeePos
+    $ \ModelState {..} -> coffeeState == Full
+  tutorialDescriptionStep
+    "Click again to\ndrink the coffee!"
+    coffeePos
+    $ \ModelState {..} -> isDrinking coffeeState
+  tutorialDescriptionStep
+    "Mmmmhhhh..."
+    coffeePos
+    $ \ModelState {..} -> isEmpty coffeeState
+  wind <- try $ proc ModelState { weather = Weather {..} } -> do
     time <- timeSinceSimStart -< ()
-    _    <- throwOn ()        -< time > 4 && wind == Strong
-    description <<< slowly "Click on the cup to make a coffee!" 0.2 -< ()
-  -- ...
+    _    <- throwOn'          -< ( wind `elem` [Strong, Weak] && time > 4
+                                 , wind)
+    placeMsg (windTurbinePosX, 0)
+      $  "But there is much more to explore!\n"
+      ++ "Watch how the wind speed changes..." -< ()
+  let fineUntil nextWind = tutorialDescriptionStep
+        "Phew! We're fine again.\nBut what else could happen..?"
+        (windTurbinePosX, 0)
+        $ \ModelState { weather = Weather {..} } -> wind == nextWind
+      strongWind = tutorialDescriptionStep
+        "Too much electrity is generated!\nThe surplus has to be stored in the battery!"
+        (windTurbinePosX, 0)
+        $ \ModelState { weather = Weather {..} } -> wind == Normal
+      weakWind = tutorialDescriptionStep
+        "Not enough electrity is generated!\nThe grid needs energy from the battery!"
+        (windTurbinePosX, 0)
+        $ \ModelState { weather = Weather {..} } -> wind == Normal
+  case wind of
+    Strong -> do
+      strongWind
+      fineUntil Weak
+      weakWind
+    Weak -> do
+      weakWind
+      fineUntil Strong
+      strongWind
+  tutorialDescriptionStep
+    "That's it!\nHave fun and enjoy your coffees!\nPress Escape to quit."
+    coffeePos
+    $ \ModelState {..} -> isBrewing coffeeState
   safe $ arr $ const $ Blank
 
 
@@ -292,3 +352,19 @@ timeSinceSimStart = proc _ -> do
   time         <- timeInfoOf absolute -< ()
   simStartTime <- keepFirst           -< time
   returnA                             -< time `diffTime` simStartTime
+
+
+-- | Like 'timer_', but doesn't output the remaining time at all.
+timer_
+  :: ( Monad m
+     , TimeDomain td
+     , Ord (Diff td)
+     )
+  => Diff td
+  -> BehaviorF (ExceptT () m) td a ()
+timer_ diff = timer diff >>> arr (const ())
+-- * To be ported to rhine
+
+throwOnCond cond e = proc a -> if cond a
+  then throwS  -< e
+  else returnA -< a
