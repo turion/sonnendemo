@@ -5,6 +5,7 @@ Game events (mouse clicks) are captured
 {-# LANGUAGE Arrows            #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeFamilies      #-}
 module Main where
@@ -17,6 +18,7 @@ import Data.VectorSpace
 
 -- rhine
 import FRP.Rhine
+import FRP.Rhine.SyncSF.Except
 
 -- rhine-gloss
 import FRP.Rhine.Gloss
@@ -191,11 +193,12 @@ sunPicture Night  = translate 100 0 $ pictures
 dancingArrow :: Monad m => Behaviour m Float Picture
 dancingArrow = proc _ -> do
   time <- timeInfoOf absolute -< ()
-  returnA                     -< contoured 2 $ greyN 0.7 $ pictures
-    [ rotate (-135) $ translate (-d/2) $ rectangleUpperSolid d h
-    , rotate   225  $ translate (-d/2) $ rectangleUpperSolid d h
-    , rotate   180  $ rectangleUpperSolid d l
-    ]
+  returnA                     -< contoured 2 $ color (greyN 0.7)
+    $ translate 0 (sin (time * 5) * 30) $ pictures
+      [ rotate (-135) $ translate 0 (-d/2) $ rectangleUpperSolid d h
+      , rotate   135  $ translate 0 (-d/2) $ rectangleUpperSolid d h
+      , rotate   180  $ rectangleUpperSolid d l
+      ]
   where
     d = 20
     h = 50
@@ -206,18 +209,18 @@ description = proc string -> do
   arrow <- dancingArrow -< ()
   returnA               -< pictures
     [ arrow
-    , translate 20 0 $ scale 0.2 0.2 $ string
+    , translate 20 0 $ scale 0.2 0.2 $ text string
     ]
 
 -- | @slowly as dt@ returns the first @n@ elements of @as@ after the time @n * dt@.
-slowly :: (Monad m, RealFrac (Diff td)) => [a] -> Diff td -> Behaviour m td [a]
+slowly :: Monad m => [a] -> Float -> Behaviour m Float [a]
 slowly as dt = proc _ -> do
-  time <- integrate -< 1 / dt
+  time <- integral  -< 1 / dt
   returnA           -< take (round time) as
 
 
 -- | When playing for the first times, give helpful text descriptions.
-tutorialDescriptions :: BehaviorF m Float ModelState Picture
+tutorialDescriptions :: Monad m => BehaviorF m Float ModelState Picture
 tutorialDescriptions = safely $ do
   try $ arr (batteryLevel >>> (>= coffeeEnergy + batteryBalancingMargin))
     >>> throwOn ()
@@ -228,17 +231,16 @@ tutorialDescriptions = safely $ do
     _    <- throwOn ()        -< time > 4 && wind == Strong
     description <<< slowly "Click on the cup to make a coffee!" 0.2 -< ()
   -- ...
-  safe $ arr $ const Blank
+  safe $ arr $ const $ Blank
 
-forAtLeast :: Diff td -> BehaviorFExcept m td a b e -> BehaviorF (ExceptT e m) td a b
-forAtLeast dt e = runMSFExcept $ timer dt >> e
 
 -- ** Combining everything
 
 -- | Combine all graphics into one picture.
 graphics :: Monad m => BehaviourF m Float ModelState Picture
-graphics = proc ModelState { weather = Weather {..}, .. } -> do
+graphics = proc model@ModelState { weather = Weather {..}, .. } -> do
   windTurbineAngle <- integral <<< average 0.3 -< windTurbineSpeed wind
+  description      <- tutorialDescriptions     -< model
   returnA                                      -< translate 0 (-200) $ pictures
     [ uncurry translate coffeePos $ pictures
       [ coffeeCup coffeeState
@@ -259,6 +261,7 @@ graphics = proc ModelState { weather = Weather {..}, .. } -> do
     , translate 100 (-20) $ house
     , translate 200 440
       $ scale 0.2 0.2 $ text $ "Coffees: " ++ show nCoffees
+    , description
     ]
 
 
@@ -279,3 +282,11 @@ glossRhine = buildGlossRhine select game
 
 main :: IO ()
 main = flowGloss (InWindow "sonnen" (800, 600) (10, 10)) backgroundColor 30 glossRhine
+
+-- * Available in rhine-0.5.0.0
+
+timeSinceSimStart :: (Monad m, TimeDomain td) => Behaviour m td (Diff td)
+timeSinceSimStart = proc _ -> do
+  time         <- timeInfoOf absolute -< ()
+  simStartTime <- keepFirst           -< time
+  returnA                             -< time `diffTime` simStartTime
