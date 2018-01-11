@@ -45,6 +45,7 @@ inUpperRectangle point base size
 
 -- * Gloss utilities
 
+-- | Calculate a path that is a given width thicker than the original path.
 contourPath :: Float -> Path -> Path
 contourPath d left@(p1 : p2 : p3 : ps) = map f $ zip3 left middle right
   where
@@ -87,5 +88,6 @@ contourFill d (Rotate angle picture) = Rotate angle $ contourFill d picture
 contourFill d (Scale x y picture) = Scale x y $ contourFill d picture
 contourFill d (Pictures pictures) = Pictures $ contourFill d <$> pictures
 
+-- | Create a version of the picture with a contour.
 contoured :: Float -> Picture -> Picture
 contoured d picture = pictures [ contourFill d picture, picture ]

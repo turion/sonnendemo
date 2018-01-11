@@ -28,6 +28,7 @@ import Util
 
 -- * Important graphical elements
 
+-- | The background colour.
 backgroundColor :: Color
 backgroundColor = mixColors 10 20 green white
 
@@ -39,7 +40,7 @@ yOffset = -200
 
 -- *** The coffee cup
 
--- | The position of the coffee cup on the screen.
+-- | The position of the coffee cup (bottom) on the screen.
 coffeePos :: Point
 coffeePos = (160, 0)
 
