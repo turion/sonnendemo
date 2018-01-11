@@ -10,6 +10,7 @@ an asynchronous functional reactive programming library.
 ## Installation
 
 I'm assuming that you have a regular Haskell development environment, on any platform.
+You will probably need to install OpenGL development libraries and FreeGLUT.
 
 ```
 git clone https://github.com/turion/sonnendemo
