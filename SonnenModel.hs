@@ -116,14 +116,16 @@ batterySim = proc ((Weather {..}, coffeeState), batteryLevel) -> do
     coffeeDrain = case coffeeState of
       Brewing _ -> batteryMaxPower
       _         -> 0
-    solarInflux = if batteryLevel >= batteryCapacity - batteryBalancingMargin
-      then 0
-      else solarPlant sun
-    windInflux = if batteryLevel >= batteryCapacity - batteryBalancingMargin
-                 && wind /= Strong
-      then -batteryMaxPower
-      else windTurbine wind
-    batteryTotalPower = solarInflux + windInflux - coffeeDrain
+    -- In case the battery was charged above the balancing margin
+    -- and there is no need to further absorb energy from the grid,
+    -- surplus energy is pushed back into the grid.
+    -- Else, energy from the solar plant and the wind turbine is absorbed.
+    batteryTotalPower
+      = - coffeeDrain
+        + if batteryLevel >= batteryCapacity - batteryBalancingMargin
+          && wind /= Strong
+          then -batteryMaxPower
+          else solarPlant sun + windTurbine wind
   integral -< batteryTotalPower
 
 
