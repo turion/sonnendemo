@@ -23,8 +23,29 @@ instance NormedSpace (Float, Float) where
   norm (x, y) = sqrt $ x ^ 2 + y ^ 2
 normalize v = v ^* (1 / norm v)
 
+
+-- | Determines whether a given point is in a given rectangle.
+inRectangle
+  :: Point -- ^ The point to test
+  -> Point -- ^ The centre of the rectangle
+  -> Vector -- ^ The size of the rectangle as @(width, height)@
+  -> Bool
+inRectangle point centre (width, height) = let (x, y) = point ^-^ centre
+  in abs x < width / 2 && abs y < height /2
+
+-- | Determines whether a given point is in a given upper rectangle.
+inUpperRectangle
+  :: Point -- ^ The point to test
+  -> Point -- ^ The base, or bottom, of the rectangle
+  -> Vector -- ^ The size of the rectangle as @(width, height)@
+  -> Bool
+inUpperRectangle point base size
+  = inRectangle point (base ^+^ (0, snd size / 2)) size
+
+
 -- * Gloss utilities
 
+-- | Calculate a path that is a given width thicker than the original path.
 contourPath :: Float -> Path -> Path
 contourPath d left@(p1 : p2 : p3 : ps) = map f $ zip3 left middle right
   where
@@ -67,5 +88,6 @@ contourFill d (Rotate angle picture) = Rotate angle $ contourFill d picture
 contourFill d (Scale x y picture) = Scale x y $ contourFill d picture
 contourFill d (Pictures pictures) = Pictures $ contourFill d <$> pictures
 
+-- | Create a version of the picture with a contour.
 contoured :: Float -> Picture -> Picture
 contoured d picture = pictures [ contourFill d picture, picture ]
