@@ -28,17 +28,23 @@ import Util
 
 -- * Important graphical elements
 
+-- | The background colour.
 backgroundColor :: Color
 backgroundColor = mixColors 10 20 green white
+
+-- | The amount by which the whole picture is offset vertically.
+yOffset :: Float
+yOffset = -200
 
 -- ** In the house
 
 -- *** The coffee cup
 
--- | The position of the coffee cup on the screen.
+-- | The position of the coffee cup (bottom) on the screen.
 coffeePos :: Point
 coffeePos = (160, 0)
 
+-- | The size of the coffee cup, in the format @(width, height)@.
 coffeeSize :: Vector
 coffeeSize = (50, 100)
 
@@ -48,11 +54,7 @@ coffeeCupSize = coffeeSize ^+^ (30, 30)
 
 -- | Determines whether a mouse click is inside the coffee cup.
 onCoffee :: Point -> Bool
-onCoffee pos = abs x < fst coffeeCupSize && abs y < snd coffeeCupSize
-  where
-    (x, y) = pos ^+^ (0, snd coffeeSize) ^-^ coffeePos -- Relative position
-
--- * The different graphical elements
+onCoffee pos = inUpperRectangle pos (coffeePos ^+^ (0, yOffset)) coffeeCupSize
 
 -- | Draw a cup of coffee, filled according to the given 'CoffeeState'.
 coffeeCup :: CoffeeState -> Picture
@@ -61,7 +63,7 @@ coffeeCup coffeeState = contoured 2 $ pictures
   [ translate (-40) 60 $ color white $ thickCircle 50 10
   , color white $ uncurry rectangleUpperSolid coffeeCupSize
   -- The coffee
-  , color (dark $ dark $ dark $ dark yellow)
+  , color (dark $ dark $ dark $ dark orange)
     $ translate 0 10
     $ rectangleUpperSolid (fst coffeeSize)
     $ snd coffeeSize * coffeeLevel coffeeState
@@ -193,7 +195,7 @@ sunPicture Night  = translate 100 0 $ pictures
 graphics :: Monad m => BehaviourF m Float ModelState Picture
 graphics = proc ModelState { weather = Weather {..}, .. } -> do
   windTurbineAngle <- integral <<< average 0.3 -< windTurbineSpeed wind
-  returnA                                      -< translate 0 (-200) $ pictures
+  returnA                                      -< translate 0 yOffset $ pictures
     [ uncurry translate coffeePos $ pictures
       [ coffeeCup coffeeState
       -- Status symbol whether a coffee can be made
