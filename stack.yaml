@@ -1,7 +1,7 @@
 resolver: lts-13.24
 extra-deps:
-  - ../rhine/rhine
-  - ../rhine/rhine-gloss
+  - rhine-0.5.1.0
+  - rhine-gloss-0.5.1.0
 nix:
   enable: true
   packages: [libGL libGLU freeglut]
