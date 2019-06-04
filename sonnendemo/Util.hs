@@ -1,8 +1,10 @@
 {- | Several utilities for MainGloss-}
 
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
 module Util where
 
 -- gloss
@@ -11,18 +13,6 @@ import Graphics.Gloss.Interface.Pure.Game
 
 -- dunai
 import Data.VectorSpace
-import Data.VectorSpace.Tuples ()
-import Data.VectorSpace.Specific ()
-
-
--- * 'VectorSpace' utilities (might be in a future dunai release)
-
--- TODO This instance might be in a future dunai release,
--- see https://github.com/ivanperez-keera/dunai/pull/67
-instance NormedSpace (Float, Float) where
-  norm (x, y) = sqrt $ x ^ 2 + y ^ 2
-normalize v = v ^* (1 / norm v)
-
 
 -- | Determines whether a given point is in a given rectangle.
 inRectangle
@@ -42,6 +32,8 @@ inUpperRectangle
 inUpperRectangle point base size
   = inRectangle point (base ^+^ (0, snd size / 2)) size
 
+deriving via FractionalVectorSpace Float instance InnerProductSpace Float
+deriving via FractionalVectorSpace Float instance NormedSpace Float
 
 -- * Gloss utilities
 
@@ -54,8 +46,9 @@ contourPath d left@(p1 : p2 : p3 : ps) = map f $ zip3 left middle right
     rotate90 (x, y) = (-y, x)
     f (l, m, r) =
       let
-        v = normalize $ l ^-^ m
-        w = normalize $ r ^-^ m
+        mynormalize vec = if norm vec == 0 then zeroVector else normalize vec
+        v = mynormalize $ l ^-^ m
+        w = mynormalize $ r ^-^ m
         dl = (-d) *^ (rotate90 v)
         dr = d *^ (rotate90 w)
       in m ^+^ dr ^-^ (w ^* (norm (dl ^-^ dr) / norm (v ^-^ w)))
@@ -81,7 +74,7 @@ contourFill d (ThickArc angle1 angle2 radius thickness)
   where
     dAngle = 180 * d / (pi * radius)
 contourFill _ (Text _) = Blank
-contourFill _ (Bitmap _ _ _ _) = Blank
+contourFill _ (Bitmap _) = Blank
 contourFill d (Color color picture) = Color (dark color) $ contourFill d picture
 contourFill d (Translate x y picture) = Translate x y $ contourFill d picture
 contourFill d (Rotate angle picture) = Rotate angle $ contourFill d picture

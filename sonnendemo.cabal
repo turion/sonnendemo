@@ -20,7 +20,7 @@ library
   exposed-modules:     SonnenModel
   hs-source-dirs:      src
   build-depends:       base  >= 4.7 && < 5
-                     , rhine == 0.4.*
+                     , rhine       == 0.5.1.*
   default-language:    Haskell2010
 
 
@@ -29,10 +29,10 @@ executable sonnendemo
   hs-source-dirs:      sonnendemo
   other-modules:       Util
   build-depends:       base        >= 4.7 && < 5
-                     , dunai       == 0.4.*
-                     , rhine       == 0.4.*
-                     , rhine-gloss == 0.4.*
-                     , gloss       == 1.11.*
+                     , dunai       == 0.5.1.*
+                     , rhine       == 0.5.1.*
+                     , rhine-gloss == 0.5.1.*
+                     , gloss       == 1.13.*
                      , sonnendemo
   default-language:    Haskell2010
   ghc-options:         -threaded
@@ -41,6 +41,6 @@ executable sonnendemo-console
   main-is:             MainConsole.hs
   hs-source-dirs:      sonnendemo-console
   build-depends:       base        >= 4.7 && < 5
-                     , rhine       == 0.4.*
+                     , rhine       == 0.5.1.*
                      , sonnendemo
   default-language:    Haskell2010

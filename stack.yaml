@@ -1,10 +1,7 @@
-resolver: lts-11.22
+resolver: lts-13.24
 extra-deps:
-  - dunai-0.4.0.0
-  - rhine-0.4.0.0
-  - rhine-gloss-0.4.0.0
-  - free-4.12.4
-  - time-1.6.0.1
+  - ../rhine/rhine
+  - ../rhine/rhine-gloss
 nix:
   enable: true
-  packages: [mesa_noglu.drivers freeglut]
+  packages: [libGL libGLU freeglut]

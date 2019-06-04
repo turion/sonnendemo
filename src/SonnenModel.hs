@@ -12,11 +12,10 @@ module SonnenModel where
 
 -- rhine
 import FRP.Rhine
-import FRP.Rhine.SyncSF.Except
 
 -- * General type synonyms
 
-type Time        = Float
+type SonnenTime  = Float
 type Power       = Float
 type Energy      = Float
 type CoffeeLevel = Float
@@ -54,10 +53,10 @@ coffeeLevel Full         = 1
 coffeeLevel (Drinking x) = 1 - x
 
 
-brewingTime :: Time
+brewingTime :: SonnenTime
 brewingTime = 2
 
-drinkingTime :: Time
+drinkingTime :: SonnenTime
 drinkingTime = 2
 
 -- | The energy needed to brew one cup of coffee.
@@ -97,7 +96,7 @@ batteryMaxPower = 0.3
 
 -- | The minimum time under which the battery is required to be able to
 --   supply primary control/balancing power.
-batteryBalancingTime :: Time
+batteryBalancingTime :: SonnenTime
 batteryBalancingTime = 6
 
 -- | The minimum charge that must remain in the battery
@@ -225,6 +224,9 @@ gameLogic = feedback 0 $ proc (coffeeRequest, batteryLevelOld) -> do
 
 
 -- * Utilities, to be ported to dunai or rhine
+
+delay :: Monad m => a -> BehaviourF m td a a
+delay = iPre
 
 {- |
 Emits 'True' when the input value changes
