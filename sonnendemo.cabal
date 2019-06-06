@@ -28,7 +28,7 @@ executable sonnendemo
   main-is:             MainGloss.hs
   hs-source-dirs:      sonnendemo
   other-modules:       Util
-  build-depends:       base        >= 4.7 && < 5
+  build-depends:       base        >= 4.12 && < 5
                      , dunai       == 0.5.1.*
                      , rhine       == 0.5.1.*
                      , rhine-gloss == 0.5.1.*
