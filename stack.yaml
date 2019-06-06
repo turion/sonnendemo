@@ -1,7 +1,4 @@
-resolver: lts-13.24
-extra-deps:
-  - rhine-0.5.1.0
-  - rhine-gloss-0.5.1.0
+resolver: nightly-2019-06-06
 nix:
   enable: true
   packages: [libGL libGLU freeglut]
