@@ -18,7 +18,6 @@ import Data.VectorSpace
 
 -- rhine
 import FRP.Rhine
-import FRP.Rhine.SyncSF.Except
 
 -- rhine-gloss
 import FRP.Rhine.Gloss
@@ -127,7 +126,7 @@ solarPower = pictures
   , translate 0 (wireThickness / 2 - down)
     $ rotate 270 $ wire
     $ fst solarPowerPos - fst batteryPos + fst batterySize
-  , color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negate (h ^+^ w), w ^-^ h ]
+  , color (dark blue) $ polygon [ h ^+^ w, h ^-^ w, negateVector (h ^+^ w), w ^-^ h ]
   ]
   where
     h    = (0 ,  10)
@@ -335,9 +334,9 @@ graphics = proc model@ModelState { weather = Weather {..}, .. } -> do
 
 -- * The main program
 
--- | The main 'SyncSF' governing events, game logic and graphics.
+-- | The main 'ClSF' governing events, game logic and graphics.
 --   An event is produced whenever the user has clicked on the cup at least once.
-game :: GlossSyncSF ()
+game :: GlossClSF ()
 game = arr (not . null) >>> gameLogic >>> graphics
 
 

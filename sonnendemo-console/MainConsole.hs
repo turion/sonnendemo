@@ -43,15 +43,15 @@ consoleOutput ModelState {..} = do
 
 -- | The game loop.
 game
-  :: SyncSF IO (RescaledClockFloat (Millisecond 40)) [a] ModelState
+  :: ClSF IO (RescaledClockFloat (Millisecond 40)) [a] ModelState
 game = arr (not . null) >-> gameLogic
 
 -- | The console output loop.
-console :: SyncSF IO (RescaledClockFloat (Millisecond 2000)) ModelState ()
-console = arrMSync consoleOutput
+console :: ClSF IO (RescaledClockFloat (Millisecond 2000)) ModelState ()
+console = arrMCl consoleOutput
 
 mainRhine
-  =   syncId             @@  rescaleClockFloat StdinClock
+  =   clId               @@  rescaleClockFloat StdinClock
   >-- collect            -@- concurrently
   --> game               @@  rescaleClockFloat waitClock
   >-- keepLast initModel -@- concurrently
@@ -81,7 +81,7 @@ instance TimeDomain UTCTimeFloat where
 type RescaledClockFloat cl = RescaledClock cl UTCTimeFloat
 
 -- | The rescaled clock value.
-rescaleClockFloat :: TimeDomainOf cl ~ UTCTime => cl -> RescaledClockFloat cl
+rescaleClockFloat :: Time cl ~ UTCTime => cl -> RescaledClockFloat cl
 rescaleClockFloat cl = RescaledClock
   { rescale       = UTCTimeFloat
   , unscaledClock = cl
