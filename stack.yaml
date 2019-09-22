@@ -1,4 +1,6 @@
 resolver: nightly-2019-06-06
+extra-deps:
+  - ../gloss-utils
 nix:
   enable: true
   packages: [libGL libGLU freeglut]

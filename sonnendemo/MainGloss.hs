@@ -13,6 +13,9 @@ module Main where
 -- gloss
 import Graphics.Gloss.Interface.Pure.Game -- TODO This should be reexported by rhine-gloss
 
+-- gloss-utils
+import Graphics.Gloss.Util.Contour
+
 -- dunai
 import Data.VectorSpace
 
