@@ -1,6 +1,3 @@
-# README
-
-
 [![Build Status](https://travis-ci.org/turion/sonnendemo.svg?branch=master)](https://travis-ci.org/turion/sonnendemo)
 
 This is a simple example game for the gloss bindings
@@ -19,6 +16,7 @@ cd sonnendemo
 ### With cabal
 
 You will probably need to install OpenGL development libraries and FreeGLUT.
+(On Debian-like systems, `sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev` should suffice.)
 
 ```
 cabal sandbox init
