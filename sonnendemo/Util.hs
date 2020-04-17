@@ -32,9 +32,6 @@ inUpperRectangle
 inUpperRectangle point base size
   = inRectangle point (base ^+^ (0, snd size / 2)) size
 
-deriving via FractionalVectorSpace Float instance InnerProductSpace Float
-deriving via FractionalVectorSpace Float instance NormedSpace Float
-
 -- * Gloss utilities
 
 -- | Calculate a path that is a given width thicker than the original path.
@@ -51,7 +48,7 @@ contourPath d left@(p1 : p2 : p3 : ps) = map f $ zip3 left middle right
         w = mynormalize $ r ^-^ m
         dl = (-d) *^ (rotate90 v)
         dr = d *^ (rotate90 w)
-      in m ^+^ dr ^-^ (w ^* (norm (dl ^-^ dr) / norm (v ^-^ w)))
+      in m ^+^ dr ^-^ ((norm (dl ^-^ dr) / norm (v ^-^ w)) *^ w)
 contourPath _ _ = error "Path must at least contain three points."
 
 -- | Fills a slightly larger version of the given picture with a darker colour.

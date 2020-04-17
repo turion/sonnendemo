@@ -214,13 +214,13 @@ gameLogic
   :: (Monad m, TimeDomain td, Diff td ~ Float)
   => BehaviorF m td Bool ModelState
 gameLogic = feedback 0 $ proc (coffeeRequest, batteryLevelOld) -> do
-  weather       <- theWeather          -< ()
-  coffeeState   <- safely coffeeStates -< (coffeeRequest, batteryLevelOld)
-  drunkCoffee   <- edgeTo Empty Empty  -< coffeeState
-  nCoffees      <- sumS                -< if drunkCoffee then 1 else 0
-  batteryLevel  <- batterySim          -< ( (weather, coffeeState)
-                                          , batteryLevelOld)
-  returnA                              -< ( ModelState {..}, batteryLevel )
+  weather       <- theWeather           -< ()
+  coffeeState   <- safely coffeeStates  -< (coffeeRequest, batteryLevelOld)
+  drunkCoffee   <- edgeTo Empty Empty   -< coffeeState
+  nCoffees      <- accumulateWith (+) 0 -< if drunkCoffee then 1 else 0
+  batteryLevel  <- batterySim           -< ( (weather, coffeeState)
+                                           , batteryLevelOld)
+  returnA                               -< ( ModelState {..}, batteryLevel )
 
 
 -- * Utilities, to be ported to dunai or rhine

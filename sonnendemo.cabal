@@ -19,8 +19,8 @@ cabal-version:       >=1.18
 library
   exposed-modules:     SonnenModel
   hs-source-dirs:      src
-  build-depends:       base  >= 4.7 && < 5
-                     , rhine       == 0.5.1.*
+  build-depends:       base  >= 4.7
+                     , rhine       >= 0.6
   default-language:    Haskell2010
 
 
@@ -28,10 +28,11 @@ executable sonnendemo
   main-is:             MainGloss.hs
   hs-source-dirs:      sonnendemo
   other-modules:       Util
-  build-depends:       base        >= 4.12 && < 5
-                     , dunai       == 0.5.1.*
-                     , rhine       == 0.5.1.*
-                     , rhine-gloss == 0.5.1.*
+  build-depends:       base        >= 4.12
+                     , dunai       >= 0.6
+                     , simple-affine-space
+                     , rhine       >= 0.6
+                     , rhine-gloss >= 0.6
                      , gloss       == 1.13.*
                      , sonnendemo
   default-language:    Haskell2010
@@ -40,7 +41,7 @@ executable sonnendemo
 executable sonnendemo-console
   main-is:             MainConsole.hs
   hs-source-dirs:      sonnendemo-console
-  build-depends:       base        >= 4.7 && < 5
-                     , rhine       == 0.5.1.*
+  build-depends:       base        >= 4.7
+                     , rhine       >= 0.6
                      , sonnendemo
   default-language:    Haskell2010
