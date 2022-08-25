@@ -16,11 +16,10 @@ cd sonnendemo
 ### With cabal
 
 You will probably need to install OpenGL development libraries and FreeGLUT.
-(On Debian-like systems, `sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev` should suffice.)
+On Debian-like systems, `sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev` should suffice.
+On systems with `nix`, you probably have to install a GHC with `haskellPackages.gloss`.
 
 ```
-cabal sandbox init
-cabal install --only-dependencies
 cabal build
 ```
 
@@ -35,7 +34,7 @@ stack build
 
 ## Play
 
-* __With cabal__: 
+* __With cabal__:
 To play it, simply run `cabal run sonnendemo` for a GUI version,
 or `cabal run sonnendemo-console` for a console version.
 
