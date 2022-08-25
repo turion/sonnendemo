@@ -296,7 +296,7 @@ tutorialDescriptions = safely $ do
       strongWind
   tutorialDescriptionStep
     "That's it!\nHave fun and enjoy your coffees!\nPress Escape to quit."
-    coffeePos
+    batteryPos
     $ \ModelState {..} -> isBrewing coffeeState
   safe $ arr $ const $ Blank
 
