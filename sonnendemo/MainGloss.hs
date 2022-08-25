@@ -30,8 +30,8 @@ import Util
 -- * Important graphical elements
 
 -- | The background colour.
-backgroundColor :: Color
-backgroundColor = mixColors 10 20 green white
+myBackgroundColor :: Color
+myBackgroundColor = mixColors 10 20 green white
 
 -- | The amount by which the whole picture is offset vertically.
 yOffset :: Float
@@ -186,7 +186,7 @@ sunPicture Cloudy = translate (-100) 0 $ color (greyN 0.5) $ pictures
   ]
 sunPicture Night  = translate 100 0 $ pictures
   [ color (light yellow) $ circleSolid 40
-  , translate (-20) (-10) $ color backgroundColor $ circleSolid 40
+  , translate (-20) (-10) $ color myBackgroundColor $ circleSolid 40
   ]
 
 -- ** Animated descriptions
@@ -335,20 +335,20 @@ graphics = proc model@ModelState { weather = Weather {..}, .. } -> do
 -- * The main program
 
 -- | The main 'ClSF' governing events, game logic and graphics.
---   An event is produced whenever the user has clicked on the cup at least once.
-game :: GlossClSF ()
-game = arr (not . null) >>> gameLogic >>> graphics
-
-
--- | The main 'Rhine' with event selection.
-glossRhine :: GlossRhine ()
-glossRhine = buildGlossRhine select game
+--   An event is produced whenever the user clicks on the cup.
+game :: GlossClSF
+game = currentEvent >>> arr (maybe False select) >>> gameLogic >>> graphics
   where
-    select (EventKey (MouseButton LeftButton) Down _ pos) | onCoffee pos = Just ()
-    select _ = Nothing
+    select (EventKey (MouseButton LeftButton) Down _ pos) = onCoffee pos
+    select _ = False
 
 main :: IO ()
-main = flowGloss (InWindow "sonnen" (1024, 768) (10, 10)) backgroundColor 30 glossRhine
+main = flowGloss settings game
+  where
+    settings = defaultSettings
+      { display = InWindow "sonnen" (1024, 768) (10, 10)
+      , backgroundColor = myBackgroundColor
+      }
 
 -- * Available in rhine-0.5.0.0
 

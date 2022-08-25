@@ -226,7 +226,7 @@ gameLogic = feedback 0 $ proc (coffeeRequest, batteryLevelOld) -> do
 -- * Utilities, to be ported to dunai or rhine
 
 delay :: Monad m => a -> BehaviourF m td a a
-delay = iPre
+delay a = iPre a
 
 {- |
 Emits 'True' when the input value changes
